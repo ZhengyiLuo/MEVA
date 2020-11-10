@@ -9,7 +9,7 @@ from smplx.body_models import ModelOutput
 from smplx.lbs import vertices2joints
 from scipy.spatial.transform import Rotation as sRot
 
-from dais.utils.transform_utils import vertizalize_smpl_root
+from meva.utils.transform_utils import vertizalize_smpl_root
 
 VIBE_DATA_DIR = "/hdd/zen/dev/ActMix/actmix/DataGen/MotionCapture/VIBE/data/vibe_data"
 

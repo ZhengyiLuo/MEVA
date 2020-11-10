@@ -1,5 +1,5 @@
 data_specs:
-  dataset_name: amass_rf
+  dataset_name: amass_rec
   file_path: /hdd/zen/data/ActBound/AMASS/amass_take7.pkl
   flip_cnd: 0
   has_smpl_root: true
@@ -8,6 +8,7 @@ data_specs:
   nc: 2
   load_class: -1
   root_dim: 6
+  flip_time: false
 
 loss_specs:
   loss_names:
@@ -36,6 +37,7 @@ lr: 3.e-4
 
 batch_size: 400
 num_epoch_fix: 500
+num_samples: 50000
 num_epoch: 1000
 save_model_interval: 10
 

@@ -4,11 +4,11 @@
 import torch
 import numpy as np
 
-from dais.utils.transform_utils import (
+from meva.utils.transform_utils import (
     convert_aa_to_orth6d, convert_orth_6d_to_aa, vertizalize_smpl_root,
     rotation_matrix_to_angle_axis, rot6d_to_rotmat, convert_orth_6d_to_mat
 )
-from dais.lib.smpl import SMPL, SMPL_MODEL_DIR, H36M_TO_J14, SMPL_MEAN_PARAMS
+from meva.lib.smpl import SMPL, SMPL_MODEL_DIR, H36M_TO_J14, SMPL_MEAN_PARAMS
 
 def compute_accel(joints):
     """
@@ -293,7 +293,7 @@ def compute_errors(gt3ds, preds):
         errors_pa.append(np.mean(pa_error))
     return errors, errors_pa
 
-def smpl_to_joints(input_pose, smpl, J_regressor = None):
+def smpl_to_joints(input_pose, betas, smpl,  J_regressor = None):
     # import pdb       
     # pdb.set_trace()
     curr_batch_size = input_pose.shape[0]
@@ -303,16 +303,8 @@ def smpl_to_joints(input_pose, smpl, J_regressor = None):
         input_pose_aa = convert_orth_6d_to_aa(input_pose)
     else:
         input_pose_aa = input_pose
-
-    input_pose_vertical = vertizalize_smpl_root(input_pose_aa)
-    input_pose_6d = convert_aa_to_orth6d(input_pose_vertical).reshape(curr_batch_size, -1)
-    input_pose = input_pose_6d.to(input_pose.device).float()
     
-#     pred_rotmat = rot6d_to_rotmat(input_pose).view(curr_batch_size, 24, 3, 3).to(device)
-    pred_rotmat = convert_orth_6d_to_mat(input_pose).to(device)
-    
-    betas = torch.zeros(curr_batch_size, 10, dtype = dtype).to(device)
-    pred_output = smpl(betas=betas,body_pose=pred_rotmat[:, 1:], global_orient= pred_rotmat[:, 0].unsqueeze(1),pose2rot=False)
+    pred_output = smpl(betas=betas,body_pose=input_pose_aa[:, 1:], global_orient= input_pose_aa[:, 0].unsqueeze(1),pose2rot=True)
 
     pred_vertices = pred_output.vertices
     pred_joints = pred_output.joints
@@ -322,21 +314,19 @@ def smpl_to_joints(input_pose, smpl, J_regressor = None):
         pred_joints = pred_joints[:, H36M_TO_J14, :]
 
     # pred_keypoints_2d = projection(pred_joints, pred_cam)
-    
-    pose = rotation_matrix_to_angle_axis(pred_rotmat.reshape(-1, 3, 3)).reshape(-1, 72)
 
     output = {
         # 'theta'  : torch.cat([pred_cam, pose, pred_shape], dim=1),
         'verts'  : pred_vertices,
         # 'kp_2d'  : pred_keypoints_2d,
         'kp_3d'  : pred_joints,
-        'rotmat' : pred_rotmat
+        # 'rotmat' : pred_rotmat
     }
     return output
 
-def compute_metric_on_seqs(seq_pred, seq_gt, smpl, J_regressor):
-    output_pred = smpl_to_joints(seq_pred, smpl, J_regressor)
-    output_gt = smpl_to_joints(seq_gt, smpl, J_regressor)
+def compute_metric_on_seqs(seq_pred, beta_pred, seq_gt, beta_gt, smpl, J_regressor):
+    output_pred = smpl_to_joints(seq_pred, beta_pred, smpl, J_regressor)
+    output_gt = smpl_to_joints(seq_gt, beta_gt, smpl, J_regressor)
     metrics = compute_metric_on_outputs(output_gt=output_gt, output_pred=output_pred)
     return metrics
 

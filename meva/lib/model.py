@@ -11,8 +11,8 @@ from torch.nn import functional as F
 from khrylib.models.mlp import MLP
 from khrylib.models.rnn import RNN
 from khrylib.utils.torch import *
-from dais.lib.vae_cnds import *
-from dais.utils.config import Config
+from meva.lib.vae_recs import *
+from meva.utils.config import Config
 
 
 

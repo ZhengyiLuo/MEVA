@@ -1,4 +1,9 @@
 from khrylib.utils import *
+import re
+
+def normalize_sent(sent):
+    sent = sent.replace('-', ' ')
+    return re.sub(r'[^\w\s]', '', sent).lower()
 
 
 def get_traj_from_state_pred(state_pred, dt=1.0/30.0, init_pos=None, init_heading=None):

@@ -7,14 +7,14 @@ class Config:
     def __init__(self, cfg_id, work_dir = ""):
         self.id = cfg_id
         
-        cfg_name = os.path.join(work_dir, 'dais/cfg/%s.yml' % cfg_id)
+        cfg_name = os.path.join(work_dir, 'meva/cfg/%s.yml' % cfg_id)
         if not os.path.exists(cfg_name):
             print("Config file doesn't exist: %s" % cfg_name)
             exit(0)
         cfg = yaml.safe_load(open(cfg_name, 'r'))
 
         self.base_dir = os.path.join(work_dir, "results")
-        self.cfg_dir = '%s/dais/%s' % (self.base_dir, cfg_id)
+        self.cfg_dir = '%s/meva/%s' % (self.base_dir, cfg_id)
         self.model_dir = '%s/models' % self.cfg_dir
         self.result_dir = '%s/results' % self.cfg_dir
         self.log_dir = '%s/log' % self.cfg_dir
@@ -40,6 +40,7 @@ class Config:
 
         self.data_specs = cfg.get("data_specs", dict())
         self.loss_specs = cfg.get('loss_specs', dict())
+        self.num_samples = cfg.get("num_samples", 5000)
 
 if __name__ == '__main__':
     cfg = Config('1212')

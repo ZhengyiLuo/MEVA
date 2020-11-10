@@ -11,7 +11,7 @@ from khrylib.models.mlp import MLP
 from khrylib.models.rnn import RNN
 from khrylib.utils.torch import *
 
-from dais.utils.transform_utils import (
+from meva.utils.transform_utils import (
     convert_aa_to_orth6d, convert_orth_6d_to_aa, vertizalize_smpl_root,
     rotation_matrix_to_angle_axis, convert_orth_6d_to_mat, perspective_projection_cam
 )

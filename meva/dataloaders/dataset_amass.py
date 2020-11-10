@@ -13,9 +13,10 @@ import scipy.io as scio
 import glob
 import pickle as pk
 import joblib
+from collections import defaultdict
 
 ## AMASS Datatset with Class
-class DatasetAMASSCLS(data.Dataset):
+class DatasetAMASS(data.Dataset):
     def __init__(self, data_specs, mode = "all"):
         print("******* Reading AMASS Class Data, Pytorch! ***********")
         np.random.seed(0) # train test split need to stablize
@@ -27,11 +28,13 @@ class DatasetAMASSCLS(data.Dataset):
         self.load_class = data_specs['load_class']
         self.flip_cnd  = data_specs['flip_cnd']
         self.t_total = data_specs['t_total']
+        self.flip_time = data_specs['flip_time']
         self.nc = data_specs['nc']
         self.to_one_hot = data_specs.get("to_one_hot", True)
         
-        self.prepare_data()
         
+        self.prepare_data()
+        self.sample_keys = {}
         
         print("Dataset Root: ", self.data_root)
         print("Dataset Flip setting: ", self.flip_cnd)
@@ -42,33 +45,21 @@ class DatasetAMASSCLS(data.Dataset):
         print("******* Finished AMASS Class Data ***********")
         
     def prepare_data(self):
-        trajs, target_trajs, class_labels, entry_names = self.process_data_pickle(self.pickle_data)
-        self.data = {'traj': trajs, 'target_trajs': target_trajs, 'label': class_labels, "entry_name": entry_names}
-        self.data_keys = list(trajs.keys())
-        self.traj_dim = list(trajs.values())[0].shape[1]
-        self.seq_len = len(trajs)
+        self.data = self.process_data_pickle(self.pickle_data)
+        self.traj_dim = list(self.data['trajs'].values())[0].shape[1]
+        self.seq_len = len(list(self.data['trajs'].values()))
 
     def process_data_pickle(self, pk_data):
+        self.data_keys = []
         trajs = {}
         target_trajs = {}
-        class_labels = {}
         entry_names = {}
         for k, v in pk_data.items():
             smpl_squence = v["pose"]
-            if "flip_pose" in v:
-                smpl_flip_squence = v["flip_pose"]
-            else:
-                smpl_flip_squence = []
-            class_label = v["label"]
-            
+
+                
             if not self.has_smpl_root:
                 smpl_squence = smpl_squence[:,6:132]
-                smpl_flip_squence = [i[:,6:132] for i in smpl_flip_squence]
-
-            if self.load_class != -1:
-                if class_label != self.load_class:
-                    continue
-            
 
             ## orig_traj -> target traj
             if smpl_squence.shape[0] >= self.t_total:
@@ -76,50 +67,39 @@ class DatasetAMASSCLS(data.Dataset):
                 trajs[k] = smpl_squence
                 target_trajs[k] = smpl_squence
                 entry_names[k] = k
+                [self.data_keys.append(k) for i in range(smpl_squence.shape[0]//self.t_total)]
 
-                
-                class_labels[k] = self.idx_to_one_hot(self.nc, class_label) if self.to_one_hot else class_label
-
-                if self.flip_cnd == 1: # Cnd = 1, has cross hold
-                    if class_label == 0:
-                        # Input is VIBE sequences
-                        k_v2m = k + "_v2m"
-                        trajs[k_v2m] = smpl_squence
-                        target_trajs[k_v2m] = smpl_flip_squence
-                        entry_names[k_v2m] = k_v2m
-
-                        class_labels[k_v2m] = self.idx_to_one_hot(self.nc, 1) if self.to_one_hot else class_label
-                    elif class_label == 1 and len(smpl_flip_squence) > 0:
-                        k_m2v = k + "_m2v"
-                        trajs[k_m2v] = smpl_squence
-                        target_trajs[k_m2v] = smpl_flip_squence[np.random.choice(len(smpl_flip_squence))]
-                        entry_names[k_m2v] = k_m2v
-
-                        class_labels[k_m2v] = self.idx_to_one_hot(self.nc, 0) if self.to_one_hot else class_label
-
-        return trajs, target_trajs, class_labels, entry_names
         
+        return {
+            "trajs": trajs, 
+            "target_trajs": target_trajs, 
+            "entry_names": entry_names
+        }
 
     def __getitem__(self, index):
 
-        curr_key = self.data_keys[index]
-        curr_traj = self.data['traj'][curr_key]
+        curr_key = self.sample_keys[index]
+        curr_traj = self.data['trajs'][curr_key]
         seq_len = curr_traj.shape[0]
         fr_start = torch.randint(seq_len - self.t_total, (1, )) if seq_len - self.t_total != 0 else 0
         fr_end = fr_start + self.t_total
         curr_traj = curr_traj[fr_start:fr_end]
         curr_tgt_traj = self.data['target_trajs'][curr_key][fr_start:fr_end]
+
+        if self.flip_time:
+            if np.random.binomial(1, 0.5):
+                curr_tgt_traj = torch.flip(curr_tgt_traj, dims = [0])
+                curr_traj = torch.flip(curr_traj, dims = [0])
         
         sample = {
             'traj': curr_traj,
             'target_trajs': curr_tgt_traj,
-            'label': self.data['label'][curr_key],
-            'entry_name': self.data['entry_name'][curr_key], 
+            'entry_name': self.data['entry_names'][curr_key], 
         }
         return sample
 
     def __len__(self):
-        return self.seq_len
+        return self.dataset_len
             
     def string_to_one_hot(self, class_name):
         return np.array(self.chosen_classes == class_name).reshape(1, -1).astype(np.uint8)
@@ -134,7 +114,8 @@ class DatasetAMASSCLS(data.Dataset):
         return hot[np.newaxis,:]
     
     def sampling_generator(self, batch_size=8, num_samples=5000, num_workers = 8):
-        # self.seq_len = num_samples ## Using only subset of the data
+        self.sample_keys = np.random.choice(self.data_keys, num_samples, replace=True)
+        self.dataset_len = len(self.sample_keys) # Change sequence length to fit 100 
         loader = torch.utils.data.DataLoader(self, batch_size=batch_size,  shuffle=True, num_workers=num_workers)
         return loader
     
@@ -155,8 +136,7 @@ if __name__ == '__main__':
         "load_class": -1,
         "root_dim": 6,
     }
-    amass_path = "/hdd/zen/data/ActBound/AMASS/real_fake_all_take3.pkl"
-    dataset = DatasetAMASSCLS(data_specs)
+    dataset = DatasetAMASS(data_specs)
     for i in range(10):
         generator = dataset.sampling_generator(num_samples=5000, batch_size=1, num_workers=1)
         for data in generator:
