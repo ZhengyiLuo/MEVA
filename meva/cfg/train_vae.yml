@@ -37,7 +37,7 @@ lr: 3.e-4
 
 batch_size: 400
 num_epoch_fix: 500
-num_samples: 50000
+num_samples: 500000
 num_epoch: 1000
 save_model_interval: 10
 

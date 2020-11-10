@@ -1,0 +1,65 @@
+DEBUG: false
+DEBUG_FREQ: 5
+LOGDIR: ''
+DEVICE: 'cuda'
+EXP_NAME: 'meva'
+OUTPUT_DIR: 'results/meva'
+NUM_WORKERS: 8
+SEED_VALUE: -1
+LOSS:
+  KP_2D_W: 300.0
+  KP_3D_W: 300.0
+  SHAPE_W: 0.06
+  POSE_W: 60.0
+  D_MOTION_LOSS_W: 0.5
+DATASET:
+  SEQLEN: 90
+TRAIN:
+  BATCH_SIZE: 32
+  NUM_ITERS_PER_EPOCH: 500
+  # PRETRAINED: 'results/meva/30-06-2020_13-35-09_meva/model_best.pth.tar'
+  # PRETRAINED: 'results/meva/25-08-2020_01-26-40_meva/model_best.pth.tar'
+  PRETRAINED_REGRESSOR: 'data/vibe_data/spin_model_checkpoint.pth.tar'
+  RESUME: ''
+  START_EPOCH: 0
+  END_EPOCH: 100
+  LR_PATIENCE: 5
+  DATA_2D_RATIO: 0.6
+  DATASETS_2D: 
+   - 'Insta'
+   - 'PoseTrack'
+   - 'PennAction'
+  DATASETS_3D:
+    - 'ThreeDPW'
+    # - 'MPII3D'
+    # - 'H36M'
+    - 'MoVi'
+    # - 'Surreal'
+    # - 'AmassRend'
+  DATASET_EVAL: 'ThreeDPW'
+  # DATASET_EVAL: 'MoVi'
+  # DATASET_EVAL: 'MPII3D'
+  # DATASET_EVAL: 'H36M'
+  # DATASET_EVAL: 'AmassRend'
+  GEN_LR: 0.00005
+  GEN_WD: 0.0
+  MOT_DISCR:
+    OPTIM: 'Adam'
+    LR: 0.0001
+    WD: 0.0001
+    MOMENTUM: 0.9
+    HIDDEN_SIZE: 1024
+    NUM_LAYERS: 2
+    FEATURE_POOL: 'attention'
+    ATT:
+      LAYERS: 3
+      SIZE: 1024
+      DROPOUT: 0.2
+MODEL:
+  TEMPORAL_TYPE: 'gru'
+  TGRU:
+    NUM_LAYERS: 2
+    ADD_LINEAR: true
+    RESIDUAL: true
+    BIDIRECTIONAL: true
+    HIDDEN_SIZE: 1024

@@ -10,13 +10,14 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 sys.path.append(os.getcwd())
+from khrylib.utils import *
 from meva.utils.config import Config
 from meva.dataloaders.data_loaders import *
 from meva.lib.model import *
 from meva.lib.loss_funcs import *
+
 from meva.lib.smpl import SMPL_MODEL_DIR
 from smplx import SMPL
-from khrylib.utils import *
 
 
 def log_info(epoch):
