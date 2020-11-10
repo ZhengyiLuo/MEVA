@@ -63,3 +63,5 @@
 [2020-11-10 02:19:39,027] ====> Epoch: 32 Time: 183.23 MSE: 32.5443 MSE_RT: 6.6514 KLD: 12.0309 lr: 0.00030 exp: train_vae
 [2020-11-10 02:22:42,759] ====> Epoch: 33 Time: 183.73 MSE: 32.2889 MSE_RT: 6.5839 KLD: 12.0723 lr: 0.00030 exp: train_vae
 [2020-11-10 02:25:45,896] ====> Epoch: 34 Time: 183.13 MSE: 31.9237 MSE_RT: 6.5204 KLD: 12.1168 lr: 0.00030 exp: train_vae
+[2020-11-10 02:28:48,755] ====> Epoch: 35 Time: 182.85 MSE: 31.4548 MSE_RT: 6.3398 KLD: 12.1222 lr: 0.00030 exp: train_vae
+[2020-11-10 02:31:51,748] ====> Epoch: 36 Time: 182.98 MSE: 31.2522 MSE_RT: 6.2764 KLD: 12.1399 lr: 0.00030 exp: train_vae
