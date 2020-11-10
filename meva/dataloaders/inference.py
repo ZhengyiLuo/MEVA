@@ -5,11 +5,14 @@ import os
 import cv2
 import numpy as np
 import os.path as osp
+import torch
 from torch.utils.data import Dataset
 from torchvision.transforms.functional import to_tensor
+from collections import defaultdict
 
 from meva.utils.smooth_bbox import get_all_bbox_params, smooth_bbox_params
 from meva.utils.image_utils import get_single_image_crop_demo
+from meva.utils.tools import get_chunk_with_overlap
 
 
 class Inference(Dataset):
@@ -61,6 +64,28 @@ class Inference(Dataset):
             return norm_img, kp_2d
         else:
             return norm_img
+
+    def iter_data(self, fr_num = 90, overlap = 20):
+
+        images = np.array([cv2.cvtColor(cv2.imread(img_name), cv2.COLOR_BGR2RGB) for img_name in self.image_file_names])
+        bboxes = self.bboxes
+        all_norm_images = [get_single_image_crop_demo(images[idx], bboxes[idx], scale=self.scale, crop_size=self.crop_size)[0] for idx in range(images.shape[0])]
+        norm_imgs = torch.stack(all_norm_images, dim = 0)
+        
+
+        seq_len = norm_imgs.shape[0]
+        chunk_idxes, chunk_selects = get_chunk_with_overlap(seq_len, window_size = fr_num, overlap=overlap)
+        data_chunk = []
+        for curr_idx in range(len(chunk_idxes)):
+            chunk_idx = chunk_idxes[curr_idx]
+            chunk_select = chunk_selects[curr_idx]
+            print(chunk_select)
+            data_return = {}
+            data_return["batch"] = norm_imgs[chunk_idx]
+            data_return['cl'] = np.array(chunk_select)
+            data_chunk.append(data_return)
+            
+        return data_chunk
 
 
 class ImageFolder(Dataset):

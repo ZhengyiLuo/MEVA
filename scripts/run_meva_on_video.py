@@ -22,7 +22,6 @@ from meva.lib.meva_model import MEVA, MEVA_demo
 from meva.utils.renderer import Renderer
 from meva.utils.kp_utils import convert_kps
 from meva.dataloaders.inference import Inference
-
 from meva.utils.demo_utils import (
     convert_crop_cam_to_orig_img,
     prepare_rendering_results,
@@ -119,30 +118,28 @@ def main(args):
 
         bboxes = dataset.bboxes
         frames = dataset.frames
-        has_keypoints = True if joints2d is not None else False
 
         dataloader = DataLoader(dataset, batch_size=args.vibe_batch_size, num_workers=16, shuffle = False)
 
         with torch.no_grad():
 
             pred_cam, pred_verts, pred_pose, pred_betas, pred_joints3d, norm_joints2d = [], [], [], [], [], []
+            data_chunks = dataset.iter_data() 
 
-            for batch in dataloader:
-                if has_keypoints:
-                    batch, nj2d = batch
-                    norm_joints2d.append(nj2d.numpy().reshape(-1, 21, 3))
+            for idx in range(len(data_chunks)):
+                batch = data_chunks[idx]
+                batch_image = batch['batch'].unsqueeze(0)
+                cl = batch['cl']
+                batch_image = batch_image.to(device)
 
-                batch = batch.unsqueeze(0)
-                batch = batch.to(device)
+                batch_size, seqlen = batch_image.shape[:2]
+                output = model(batch_image)[-1]
 
-                batch_size, seqlen = batch.shape[:2]
-                output = model(batch)[-1]
-
-                pred_cam.append(output['theta'][:, :, :3].reshape(batch_size * seqlen, -1))
-                pred_verts.append(output['verts'].reshape(batch_size * seqlen, -1, 3))
-                pred_pose.append(output['theta'][:,:,3:75].reshape(batch_size * seqlen, -1))
-                pred_betas.append(output['theta'][:, :,75:].reshape(batch_size * seqlen, -1))
-                pred_joints3d.append(output['kp_3d'].reshape(batch_size * seqlen, -1, 3))
+                pred_cam.append(output['theta'][0, cl[0]: cl[1], :3])
+                pred_verts.append(output['verts'][0, cl[0]: cl[1]])
+                pred_pose.append(output['theta'][0,cl[0]: cl[1],3:75])
+                pred_betas.append(output['theta'][0, cl[0]: cl[1],75:])
+                pred_joints3d.append(output['kp_3d'][0, cl[0]: cl[1]])
 
 
             pred_cam = torch.cat(pred_cam, dim=0)
@@ -151,7 +148,7 @@ def main(args):
             pred_betas = torch.cat(pred_betas, dim=0)
             pred_joints3d = torch.cat(pred_joints3d, dim=0)
 
-            del batch
+            del batch_image
 
 
         # ========= Save results to a pickle file ========= #

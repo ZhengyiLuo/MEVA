@@ -1,31 +1,10 @@
 from meva.khrylib.utils import *
 import re
+from skimage.util.shape import view_as_windows
 
-def normalize_sent(sent):
+def normalize_sentence(sent):
     sent = sent.replace('-', ' ')
     return re.sub(r'[^\w\s]', '', sent).lower()
-
-
-def get_traj_from_state_pred(state_pred, dt=1.0/30.0, init_pos=None, init_heading=None):
-    init_pos = np.array([0., 0.]) if init_pos is None else init_pos
-    init_heading = np.array([1., 0., 0., 0.]) if init_heading is None else init_heading
-    nq = state_pred.shape[-1] - 4
-    pos = init_pos.copy()
-    heading = init_heading.copy()
-    traj_pred = []
-    for i in range(state_pred.shape[0]):
-        state_pred[i, 1:5] /= np.linalg.norm(state_pred[i, 1:5])
-        qpos = np.concatenate((pos, state_pred[i, :nq - 2]))
-        qvel = state_pred[i, nq - 2:]
-        qpos[3:7] = quaternion_multiply(heading, qpos[3:7])
-        linv = quat_mul_vec(heading, qvel[:3])
-        angv = quat_mul_vec(qpos[3:7], qvel[3:6])
-        pos += linv[:2] * dt
-        new_q = quaternion_multiply(quat_from_expmap(angv * dt), qpos[3:7])
-        heading = get_heading_q(new_q)
-        traj_pred.append(qpos)
-    traj_qpos = np.vstack(traj_pred)
-    return traj_qpos
 
 
 def batch_get_traj(traj_arr, dt=1.0/30.0, init_pos=None, init_heading=None):
@@ -34,3 +13,29 @@ def batch_get_traj(traj_arr, dt=1.0/30.0, init_pos=None, init_heading=None):
         traj_int.append(get_traj_from_state_pred(traj, dt, init_pos, init_heading))
     traj_int = np.stack(traj_int)
     return traj_int
+
+
+def get_chunk_selects(chunk_idxes, last_chunk, window_size = 80, overlap = 10):
+    shift = window_size - int(overlap/2)
+    chunck_selects = []
+    for i in range(len(chunk_idxes)):
+        chunk_idx = chunk_idxes[i]
+        if i == 0:
+            chunck_selects.append((0, shift))
+        elif i == len(chunk_idxes) - 1:
+            chunck_selects.append((-last_chunk, window_size))
+        else:
+            chunck_selects.append((int(overlap/2), shift))
+    return chunck_selects 
+
+def get_chunk_with_overlap(num_frames, window_size = 80, overlap = 10):
+    assert overlap % 2 == 0
+    step = window_size - overlap 
+    
+    chunk_idxes = view_as_windows(np.array(range(num_frames)), window_size, step= step)
+    chunk_supp = np.linspace(num_frames - window_size, num_frames-1, num = window_size).astype(int)
+    chunk_idxes = np.concatenate((chunk_idxes, chunk_supp[None, ]))
+    last_chunk = chunk_idxes[-1][:step][-1] - chunk_idxes[-2][:step][-1] + int(overlap/2)
+    chunck_selects = get_chunk_selects(chunk_idxes, last_chunk, window_size= window_size, overlap=overlap)
+    
+    return chunk_idxes, chunck_selects

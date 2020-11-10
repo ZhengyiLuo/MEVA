@@ -206,7 +206,7 @@ def get_single_image_crop(image, bbox, scale=1.3):
 
     return crop_image
 
-def get_single_image_crop_demo(image, bbox, kp_2d, scale=1.2, crop_size=224):
+def get_single_image_crop_demo(image, bbox, kp_2d = None, scale=1.2, crop_size=224):
     if isinstance(image, str):
         if os.path.isfile(image):
             image = cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB)

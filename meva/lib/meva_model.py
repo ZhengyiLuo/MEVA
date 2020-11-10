@@ -343,7 +343,7 @@ class MEVA_demo(MEVA):
             bidirectional=False,
             use_residual=True,
             pretrained=osp.join(VIBE_DATA_DIR, 'spin_model_checkpoint.pth.tar'),
-            cfg = "zen_rec_23"
+            cfg = "train_vae"
     ):
         super().__init__(seqlen, batch_size, n_layers, hidden_size, add_linear, \
             bidirectional, use_residual, pretrained, cfg)
