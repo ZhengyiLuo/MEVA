@@ -1,7 +1,7 @@
 # This script is borrowed from https://github.com/mkocabas/VIBE
 # Adhere to their licence to use this script
 
-from lib.dataset import Dataset2D
+from meva.dataloaders import Dataset2D
 from meva.utils.video_config import POSETRACK_DIR
 
 

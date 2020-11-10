@@ -11,7 +11,7 @@ from progress.bar import Bar
 from tqdm import tqdm
 
 from meva.utils.video_config import VIBE_DATA_DIR
-from meva.utils.utils import move_dict_to_device, AverageMeter
+from meva.utils.vibe_utils import move_dict_to_device, AverageMeter
 
 from meva.utils.eval_utils import (
     compute_accel,

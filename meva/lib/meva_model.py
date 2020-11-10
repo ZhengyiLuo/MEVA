@@ -303,14 +303,15 @@ class MEVA(nn.Module):
 
         
         ##### Window Fix #####
-        vae_init_pose = self.vae_init_mlp(motion_z)
+        # vae_init_pose = self.vae_init_mlp(motion_z)
 
         # smpl_output = self.regressor(feature[:, 0, :], J_regressor=J_regressor)
         # vae_init_pose = convert_mat_to_6d(smpl_output[0]['rotmat']).reshape(batch_size, 144)
+        # X_r = self.vae_model.decode(vae_init_pose[None, :, :], motion_z)
         ##### Window Fix #####
 
-
-        X_r = self.vae_model.decode(vae_init_pose[None, :, :], motion_z)
+        
+        X_r = self.vae_model.decode(motion_z)
         X_r = X_r.permute(1, 0, 2)[:,:seqlen,:]
         
 
@@ -343,7 +344,7 @@ class MEVA_demo(MEVA):
             bidirectional=False,
             use_residual=True,
             pretrained=osp.join(VIBE_DATA_DIR, 'spin_model_checkpoint.pth.tar'),
-            cfg = "train_vae"
+            cfg = "vae_rec_1"
     ):
         super().__init__(seqlen, batch_size, n_layers, hidden_size, add_linear, \
             bidirectional, use_residual, pretrained, cfg)
@@ -381,7 +382,7 @@ class MEVA_demo(MEVA):
 if __name__ == "__main__":
     from kinematic_synthesis.utils.config import Config
     from kinematic_synthesis.lib.model import *
-    from lib.dataset import *
+    from meva.dataloaders import *
     from torch.utils.data import DataLoader
     
     meva_model = MEVA(90)

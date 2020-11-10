@@ -3,7 +3,7 @@
 
 from torch.utils.data import ConcatDataset, DataLoader
 
-from lib.dataset import *
+from meva.dataloaders import *
 
 
 def get_data_loaders(cfg):

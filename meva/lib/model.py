@@ -46,18 +46,10 @@ def get_models(cfg, iter = -1):
         model = VAErec(traj_dim, t_total, model_specs)
         run_epoch = run_epoch_vae_rec
         run_batch = run_batch_vae_rec
-    elif model_name == 'VAEclfv1':
-        model = VAEclfv1(traj_dim, data_specs['nc'], t_total,  model_specs)
-        run_epoch = run_epoch_vae_cnd
-        run_batch = run_batch_vae_cnd
-    elif model_name == 'VAEclfv2':
-        model = VAEclfv2(traj_dim, data_specs['nc'], t_total, model_specs)
-        run_epoch = run_epoch_vae_cnd
-        run_batch = run_batch_vae_cnd
-    elif model_name == 'RefinerV1':
-        model = get_vis_refiner(cfg, iter = iter, vae_iter=model_specs['vae_iter'])
-        run_epoch = run_epoch_refiner
-        run_batch = run_batch_refiner
+    if model_name == 'VAErecV2':
+        model = VAErecV2(traj_dim, t_total, model_specs)
+        run_epoch = run_epoch_vae_rec
+        run_batch = run_batch_vae_rec
     
     if iter > 0:
         cp_path = cfg.model_path % iter
@@ -67,6 +59,7 @@ def get_models(cfg, iter = -1):
     elif iter == -1:
         pass
     elif iter  == -2:
+        # Find the largest trained iteration
         cp_path = sorted(glob.glob(osp.join(cfg.model_dir, "*")), reverse= True)[0]
         print("loading {} model from checkpoint: {}".format(model_name, cp_path))
         model_cp = pickle.load(open(cp_path, "rb"))

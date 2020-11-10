@@ -1,5 +1,11 @@
 # This script is borrowed from https://github.com/mkocabas/VIBE
 # Adhere to their licence to use this script
+import glob
+import os
+import sys
+import pdb
+import os.path as osp
+sys.path.append(os.getcwd())
 
 import argparse
 from yacs.config import CfgNode as CN
@@ -28,13 +34,14 @@ cfg.DEBUG = True
 cfg.LOGDIR = ''
 cfg.NUM_WORKERS = 8
 cfg.DEBUG_FREQ = 1000
-cfg.SEED_VALUE = -1
+cfg.SEED_VALUE = 1
 
 cfg.CUDNN = CN()
 cfg.CUDNN.BENCHMARK = True
 cfg.CUDNN.DETERMINISTIC = False
 cfg.CUDNN.ENABLED = True
 
+cfg.VAE_CFG = "vae_rec_1"
 cfg.TRAIN = CN()
 cfg.TRAIN.DATASETS_2D = ['Insta']
 cfg.TRAIN.DATASETS_3D = ['MPII3D']
@@ -104,6 +111,7 @@ def get_cfg_defaults():
 
 def update_cfg(cfg_file):
     cfg = get_cfg_defaults()
+    
     cfg.merge_from_file(cfg_file)
     return cfg.clone()
 
@@ -115,9 +123,10 @@ def parse_args():
     args = parser.parse_args()
     print(args, end='\n\n')
 
-    cfg_file = args.cfg
+    cfg_file = osp.join("meva/cfg", f"{args.cfg}.yml")
+    print(f"loading from {cfg_file}")
     if args.cfg is not None:
-        cfg = update_cfg(args.cfg)
+        cfg = update_cfg(cfg_file)
     else:
         cfg = get_cfg_defaults()
 

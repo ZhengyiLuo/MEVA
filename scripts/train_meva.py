@@ -16,13 +16,13 @@ import numpy as np
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
 
-from lib.core.loss import MEVALoss
-from lib.core.trainer import Trainer
 from meva.utils.video_config import parse_args
-from meva.utils.utils import prepare_output_dir
-from lib.models import MEVA
-from lib.dataset.loaders import get_data_loaders
-from meva.utils.utils import create_logger, get_optimizer
+from meva.utils.vibe_utils import prepare_output_dir, create_logger, get_optimizer
+from meva.lib.meva_model import MEVA
+from meva.dataloaders.loaders import get_data_loaders
+from meva.lib.vibe_loss import VIBELoss
+from meva.lib.vibe_trainer import Trainer
+
 
 
 def main(cfg):
@@ -52,7 +52,7 @@ def main(cfg):
     data_loaders = get_data_loaders(cfg)
 
     # ========= Compile Loss ========= #
-    loss = MEVALoss(
+    loss = VIBELoss(
         e_loss_weight=cfg.LOSS.KP_2D_W,
         e_3d_loss_weight=cfg.LOSS.KP_3D_W,
         e_pose_loss_weight=cfg.LOSS.POSE_W,
@@ -69,6 +69,7 @@ def main(cfg):
         add_linear=cfg.MODEL.TGRU.ADD_LINEAR,
         bidirectional=cfg.MODEL.TGRU.BIDIRECTIONAL,
         use_residual=cfg.MODEL.TGRU.RESIDUAL,
+        cfg = cfg.VAE_CFG,
     ).to(cfg.DEVICE)
 
     if cfg.TRAIN.PRETRAINED != '' and os.path.isfile(cfg.TRAIN.PRETRAINED):

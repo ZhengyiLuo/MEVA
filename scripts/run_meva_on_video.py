@@ -265,7 +265,7 @@ def main(args):
 
         # ========= Save rendered video ========= #
         vid_name = os.path.basename(video_file)
-        save_name = f'{vid_name.replace(".mp4", "")}_vibe_result.mp4'
+        save_name = f'{vid_name.replace(".mp4", "")}_meva_result.mp4'
         save_name = os.path.join(output_path, save_name)
         print(f'Saving result video to {save_name}')
         images_to_video(img_folder=output_img_folder, output_vid_file=save_name)

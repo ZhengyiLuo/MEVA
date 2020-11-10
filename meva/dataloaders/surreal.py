@@ -1,7 +1,7 @@
 # This script is borrowed from https://github.com/mkocabas/VIBE
 # Adhere to their licence to use this script
 
-from lib.dataset import Dataset3D
+from meva.dataloaders import Dataset3D
 from meva.utils.video_config import SURREAL_DIR
 
 class Surreal(Dataset3D):
