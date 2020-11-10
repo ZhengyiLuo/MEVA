@@ -1,0 +1,12 @@
+[2020-11-10 00:26:01,160] ====> Epoch: 0 Time: 3.64 MSE: 2369.7186 MSE_RT: 2539.7400 KLD: 3.5814 lr: 0.00030 exp: train_vae
+[2020-11-10 00:26:04,434] ====> Epoch: 1 Time: 3.27 MSE: 652.2821 MSE_RT: 1984.9106 KLD: 8.4414 lr: 0.00030 exp: train_vae
+[2020-11-10 00:26:07,706] ====> Epoch: 2 Time: 3.27 MSE: 497.8425 MSE_RT: 1173.0279 KLD: 5.7162 lr: 0.00030 exp: train_vae
+[2020-11-10 00:26:11,028] ====> Epoch: 3 Time: 3.32 MSE: 430.4441 MSE_RT: 629.9851 KLD: 6.8767 lr: 0.00030 exp: train_vae
+[2020-11-10 00:26:14,364] ====> Epoch: 4 Time: 3.33 MSE: 395.1103 MSE_RT: 551.0327 KLD: 12.4646 lr: 0.00030 exp: train_vae
+[2020-11-10 00:26:17,654] ====> Epoch: 5 Time: 3.29 MSE: 383.9204 MSE_RT: 509.2928 KLD: 17.0584 lr: 0.00030 exp: train_vae
+[2020-11-10 00:26:20,977] ====> Epoch: 6 Time: 3.32 MSE: 380.5932 MSE_RT: 502.3838 KLD: 18.7278 lr: 0.00030 exp: train_vae
+[2020-11-10 00:26:24,353] ====> Epoch: 7 Time: 3.37 MSE: 380.1927 MSE_RT: 500.3629 KLD: 18.8932 lr: 0.00030 exp: train_vae
+[2020-11-10 00:26:27,653] ====> Epoch: 8 Time: 3.29 MSE: 372.8359 MSE_RT: 481.5158 KLD: 18.6672 lr: 0.00030 exp: train_vae
+[2020-11-10 00:26:31,010] ====> Epoch: 9 Time: 3.35 MSE: 373.0042 MSE_RT: 470.3520 KLD: 18.6190 lr: 0.00030 exp: train_vae
+[2020-11-10 00:26:34,746] ====> Epoch: 10 Time: 3.32 MSE: 369.9150 MSE_RT: 436.8263 KLD: 18.5113 lr: 0.00030 exp: train_vae
+[2020-11-10 00:26:38,051] ====> Epoch: 11 Time: 3.30 MSE: 355.8284 MSE_RT: 376.4437 KLD: 20.2817 lr: 0.00030 exp: train_vae
