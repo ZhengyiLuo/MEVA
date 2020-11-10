@@ -9,9 +9,9 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from khrylib.models.mlp import MLP
-from khrylib.models.rnn import RNN
-from khrylib.utils.torch import *
+from meva.khrylib.models.mlp import MLP
+from meva.khrylib.models.rnn import RNN
+from meva.khrylib.utils.torch import *
 
 class VAErec(nn.Module):
     def __init__(self, nx, t_total, specs):

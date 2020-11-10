@@ -1,18 +1,5 @@
-# -*- coding: utf-8 -*-
-
-# Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V. (MPG) is
-# holder of all proprietary rights on this computer program.
-# You can only use this computer program if you have closed
-# a license agreement with MPG or you get the right to use the computer
-# program from someone who is authorized to grant you that right.
-# Any use of the computer program without a valid license is prohibited and
-# liable to prosecution.
-#
-# Copyright©2019 Max-Planck-Gesellschaft zur Förderung
-# der Wissenschaften e.V. (MPG). acting on behalf of its Max Planck Institute
-# for Intelligent Systems. All rights reserved.
-#
-# Contact: ps-license@tuebingen.mpg.de
+# This script is borrowed from https://github.com/mkocabas/VIBE
+# Adhere to their licence to use this script
 
 import glob
 import os
@@ -31,11 +18,11 @@ from torch.utils.tensorboard import SummaryWriter
 
 from lib.core.loss import MEVALoss
 from lib.core.trainer import Trainer
-from lib.core.config import parse_args
-from lib.utils.utils import prepare_output_dir
+from meva.utils.video_config import parse_args
+from meva.utils.utils import prepare_output_dir
 from lib.models import MEVA
 from lib.dataset.loaders import get_data_loaders
-from lib.utils.utils import create_logger, get_optimizer
+from meva.utils.utils import create_logger, get_optimizer
 
 
 def main(cfg):

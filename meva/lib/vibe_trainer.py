@@ -1,18 +1,5 @@
-# -*- coding: utf-8 -*-
-
-# Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V. (MPG) is
-# holder of all proprietary rights on this computer program.
-# You can only use this computer program if you have closed
-# a license agreement with MPG or you get the right to use the computer
-# program from someone who is authorized to grant you that right.
-# Any use of the computer program without a valid license is prohibited and
-# liable to prosecution.
-#
-# Copyright©2019 Max-Planck-Gesellschaft zur Förderung
-# der Wissenschaften e.V. (MPG). acting on behalf of its Max Planck Institute
-# for Intelligent Systems. All rights reserved.
-#
-# Contact: ps-license@tuebingen.mpg.de
+# This script is borrowed from https://github.com/mkocabas/VIBE
+# Adhere to their licence to use this script
 
 import time
 import torch
@@ -23,10 +10,10 @@ import os.path as osp
 from progress.bar import Bar
 from tqdm import tqdm
 
-from lib.core.config import VIBE_DATA_DIR
-from lib.utils.utils import move_dict_to_device, AverageMeter
+from meva.utils.video_config import VIBE_DATA_DIR
+from meva.utils.utils import move_dict_to_device, AverageMeter
 
-from lib.utils.eval_utils import (
+from meva.utils.eval_utils import (
     compute_accel,
     compute_error_accel,
     compute_error_verts,
@@ -210,7 +197,7 @@ class Trainer():
 
             if self.debug:
                 print('==== Visualize ====')
-                from lib.utils.vis import batch_visualize_vid_preds
+                from meva.utils.vis import batch_visualize_vid_preds
                 video = target_3d['video']
                 dataset = 'spin'
                 vid_tensor = batch_visualize_vid_preds(video, preds[-1], target_3d.copy(),
@@ -272,7 +259,7 @@ class Trainer():
 
             # <============= DEBUG
             if self.debug and self.valid_global_step % self.debug_freq == 0:
-                from lib.utils.vis import batch_visualize_vid_preds
+                from meva.utils.vis import batch_visualize_vid_preds
                 video = target['video']
                 dataset = 'common'
                 vid_tensor = batch_visualize_vid_preds(video, preds[-1], target, vis_hmr=False, dataset=dataset)

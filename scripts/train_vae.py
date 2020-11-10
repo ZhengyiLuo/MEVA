@@ -10,7 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 sys.path.append(os.getcwd())
-from khrylib.utils import *
+from meva.khrylib.utils import *
 from meva.utils.config import Config
 from meva.dataloaders.data_loaders import *
 from meva.lib.model import *

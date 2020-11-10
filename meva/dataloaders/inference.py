@@ -1,18 +1,5 @@
-# -*- coding: utf-8 -*-
-
-# Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V. (MPG) is
-# holder of all proprietary rights on this computer program.
-# You can only use this computer program if you have closed
-# a license agreement with MPG or you get the right to use the computer
-# program from someone who is authorized to grant you that right.
-# Any use of the computer program without a valid license is prohibited and
-# liable to prosecution.
-#
-# Copyright©2019 Max-Planck-Gesellschaft zur Förderung
-# der Wissenschaften e.V. (MPG). acting on behalf of its Max Planck Institute
-# for Intelligent Systems. All rights reserved.
-#
-# Contact: ps-license@tuebingen.mpg.de
+# This script is borrowed from https://github.com/mkocabas/VIBE
+# Adhere to their licence to use this script
 
 import os
 import cv2
@@ -21,12 +8,12 @@ import os.path as osp
 from torch.utils.data import Dataset
 from torchvision.transforms.functional import to_tensor
 
-from lib.utils.smooth_bbox import get_all_bbox_params
-from lib.data_utils.img_utils import get_single_image_crop_demo
+from meva.utils.smooth_bbox import get_all_bbox_params, smooth_bbox_params
+from meva.utils.image_utils import get_single_image_crop_demo
 
 
 class Inference(Dataset):
-    def __init__(self, image_folder, frames, bboxes=None, joints2d=None, scale=1.0, crop_size=224):
+    def __init__(self, image_folder, frames, bboxes=None, joints2d=None, scale=1.0, crop_size=224, smooth = True):
         self.image_file_names = [
             osp.join(image_folder, x)
             for x in os.listdir(image_folder)
@@ -34,7 +21,12 @@ class Inference(Dataset):
         ]
         self.image_file_names = sorted(self.image_file_names)
         self.image_file_names = np.array(self.image_file_names)[frames]
-        self.bboxes = bboxes
+
+        if smooth:
+            smoothed_bbox = smooth_bbox_params(bboxes[:, :3])
+            bboxes = np.hstack((smoothed_bbox, smoothed_bbox[:, 2:3]))
+
+        self.bboxes = bboxes 
         self.joints2d = joints2d
         self.scale = scale
         self.crop_size = crop_size
@@ -57,11 +49,8 @@ class Inference(Dataset):
 
     def __getitem__(self, idx):
         img = cv2.cvtColor(cv2.imread(self.image_file_names[idx]), cv2.COLOR_BGR2RGB)
-
         bbox = self.bboxes[idx]
-
         j2d = self.joints2d[idx] if self.has_keypoints else None
-
         norm_img, raw_img, kp_2d = get_single_image_crop_demo(
             img,
             bbox,

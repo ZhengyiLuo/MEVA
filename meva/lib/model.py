@@ -8,9 +8,9 @@ sys.path.append(os.getcwd())
 import numpy as np
 from torch import nn
 from torch.nn import functional as F
-from khrylib.models.mlp import MLP
-from khrylib.models.rnn import RNN
-from khrylib.utils.torch import *
+from meva.khrylib.models.mlp import MLP
+from meva.khrylib.models.rnn import RNN
+from meva.khrylib.utils.torch import *
 from meva.lib.vae_recs import *
 from meva.utils.config import Config
 
@@ -95,36 +95,6 @@ def get_vae_model(cfg, traj_dim):
     return 
 
 
-
-def get_dsf_model(cfg, traj_dim):
-    specs = cfg.dsf_specs
-    model_name = specs.get('model_name', 'DSFv1')
-    if model_name == 'DSFv1':
-        return DSF(traj_dim, cfg.nz, cfg.nc, cfg.dsf0_classes, specs)
-
-def get_clf_model(cfg, traj_dim):
-    clf_specs = cfg.clf_specs
-    model_name = clf_specs.get('model_name', 'CLFv1')
-    if model_name == 'CLFv1':
-        return CLFv1(traj_dim, clf_specs)
-    elif model_name == 'CLFv2':
-        return CLFv2(traj_dim, cfg.nc, clf_specs)
-    elif model_name == 'CLFvae':
-        return CLFvae(traj_dim, cfg.nc, clf_specs, cfg)
-
-def get_discriminator(cfg, traj_dim):
-    specs = cfg.disc_specs
-    model_name = specs.get('discriminator_name', 'DISCv1')
-    if model_name == 'DISCv1':
-        return Discriminator(traj_dim, specs)
-
-def get_tcn_model(cfg):
-    specs = cfg.tcn_specs
-    model_name = specs.get("model_name", "TCNv1")
-    if model_name == "TCNv1":
-        return TCNv1(150, [144, 180, 256, 180, 150])
-    elif model_name == "TCNv2":
-        return TCNv2(24, 6, 24, [3,3,3])
 
 
 if __name__ == '__main__':

@@ -66,8 +66,8 @@ def compute_error_verts(pred_verts, target_verts=None, target_theta=None):
     """
 
     if target_verts is None:
-        from lib.models.smpl import SMPL_MODEL_DIR
-        from lib.models.smpl import SMPL
+        from meva.lib.smpl import SMPL_MODEL_DIR
+        from meva.lib.smpl import SMPL
         device = 'cpu'
         smpl = SMPL(
             SMPL_MODEL_DIR,

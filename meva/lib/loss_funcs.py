@@ -7,9 +7,9 @@ import numpy as np
 from torch import nn
 from torch.nn import functional as F
 
-from khrylib.models.mlp import MLP
-from khrylib.models.rnn import RNN
-from khrylib.utils.torch import *
+from meva.khrylib.models.mlp import MLP
+from meva.khrylib.models.rnn import RNN
+from meva.khrylib.utils.torch import *
 
 from meva.utils.transform_utils import (
     convert_aa_to_orth6d, convert_orth_6d_to_aa, vertizalize_smpl_root,

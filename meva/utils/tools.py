@@ -1,4 +1,4 @@
-from khrylib.utils import *
+from meva.khrylib.utils import *
 import re
 
 def normalize_sent(sent):
