@@ -111,7 +111,7 @@ def main(args):
 
     
     # ========= Run MEVA on each person ========= #
-    bbox_scale = 1.1
+    bbox_scale = 0.9
     print(f'Running MEVA on each tracklet...')
     vibe_time = time.time()
     vibe_results = {}
@@ -206,6 +206,8 @@ def main(args):
 
     joblib.dump(vibe_results, os.path.join(output_path, "vibe_output.pkl"))
 
+    # vibe_results = joblib.load(os.path.join(output_path, "vibe_output.pkl"))
+
     if not args.no_render:
         # ========= Render results as a single video ========= #
         renderer = Renderer(resolution=(orig_width, orig_height), orig_img=True, wireframe=args.wireframe)
@@ -228,7 +230,9 @@ def main(args):
         for frame_idx in tqdm(range(len(image_file_names))):
             img_fname = image_file_names[frame_idx]
             img = cv2.imread(img_fname)
-            img = np.zeros(img.shape)
+            # img = np.zeros(img.shape)
+            if frame_idx > 100:
+                break
 
             if args.sideview:
                 side_img = np.zeros_like(img)
@@ -260,8 +264,9 @@ def main(args):
                         frame_verts,
                         cam=frame_cam,
                         color=mc,
-                        angle=270,
-                        axis=[0,1,0],
+                        mesh_filename=mesh_filename,
+                        # angle=270,
+                        # axis=[0,1,0],
                     )
 
             if args.sideview:

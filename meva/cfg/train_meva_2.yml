@@ -6,7 +6,7 @@ EXP_NAME: 'meva'
 OUTPUT_DIR: 'results/meva'
 VAE_CFG: "vae_rec_2"
 NUM_WORKERS: 8
-SEED_VALUE: -1
+SEED_VALUE: 0
 LOSS:
   KP_2D_W: 300.0
   KP_3D_W: 300.0
@@ -28,7 +28,7 @@ TRAIN:
   DATA_2D_RATIO: 0.6
   DATASETS_2D: 
    - 'Insta'
-   - 'PoseTrack'
+  #  - 'PoseTrack'
    - 'PennAction'
   DATASETS_3D:
     - 'ThreeDPW'

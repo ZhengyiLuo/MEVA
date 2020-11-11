@@ -27,42 +27,74 @@ from meva.utils.video_config import VIBE_DB_DIR
 from meva.utils.kp_utils import convert_kps
 from meva.utils.image_utils import normalize_2d_kp, transfrom_keypoints, split_into_chunks
 
-
 logger = logging.getLogger(__name__)
 
 class Dataset3D(Dataset):
-    def __init__(self, set, seqlen, overlap=0., folder=None, dataset_name=None, debug=False):
+    def __init__(self, split, seqlen, overlap=0., folder=None, dataset_name=None, debug=False):
 
         self.folder = folder
-        self.set = set
+        self.split = split
         self.dataset_name = dataset_name
         self.seqlen = seqlen
-        self.stride = int(seqlen * (1-overlap))
         self.debug = debug
         self.db = self.load_db()
-        self.vid_indices = split_into_chunks(self.db['vid_name'], self.seqlen, self.stride)
+
+
+        self.vid_names = vid_names = self.db['vid_name']
+        self.unique_names = unique_names = np.unique(self.db['vid_name'])
+        self.vid_start = vid_start = {}
+        self.vid_lengths = vid_lengths = {}
+        for u_name in unique_names:
+            finds = np.where(vid_names== u_name)[0]
+            vid_start[u_name] = finds[0]
+            vid_lengths[u_name] = len(finds)
+        
+        if self.split == "train" or self.split =="all":
+            self.data_samples = data_samples = []
+            for k, v in vid_lengths.items():
+                if vid_lengths[k] > seqlen:
+                    [self.data_samples.append(k) for i in range(vid_lengths[k]//seqlen)]
+        elif self.split == "test" or self.split == "val":
+            self.stride = int(seqlen * (1-overlap))
+            self.data_samples = split_into_chunks(self.db['vid_name'], self.seqlen, self.stride)
+
+        print("********************** Loading 3D dataset **********************")
+        print(f'Loaded {self.dataset_name} dataset from {self.db_file}')
+        print(f"{dataset_name} - {self.split}: Number of videos: ", len(self.unique_names))    
+        print("Number of sampled sequences: ", len(self.data_samples))
+        print(f'Number of dataset objects {self.__len__()}')
+        print(f'Dataset overlap ratio: ', overlap)
+        print("********************** Loading 3D dataset **********************")
 
     def __len__(self):
-        return len(self.vid_indices)
+        return len(self.data_samples)
 
     def __getitem__(self, index):
         return self.get_single_item(index)
 
     def load_db(self):
-        db_file = osp.join(VIBE_DB_DIR, f'{self.dataset_name}_{self.set}_db.pt')
+        self.db_file = db_file = osp.join(VIBE_DB_DIR, f'{self.dataset_name}_{self.split}_db.pt')
 
         if osp.isfile(db_file):
             db = joblib.load(db_file)
         else:
             raise ValueError(f'{db_file} do not exists')
 
-        print(f'Loaded {self.dataset_name} dataset from {db_file}')
         return db
 
     def get_single_item(self, index):
-        start_index, end_index = self.vid_indices[index]
+        if self.split == "train" or self.split =="all":
+            curr_key = self.data_samples[index]
+            curr_length = self.vid_lengths[curr_key]
+            vid_start = self.vid_start[curr_key]
 
-        is_train = self.set == 'train' or self.set == "all"
+            start_index = (torch.randint(curr_length - self.seqlen, (1, )) + vid_start if curr_length - self.seqlen != 0 else vid_start).long()
+            end_index = (start_index + self.seqlen - 1).long()
+        elif self.split == "test" or self.split == "val":
+            start_index, end_index = self.data_samples[index]
+
+
+        is_train = self.split == 'train' or self.split == "all"
         
         if self.dataset_name == '3dpw' or self.dataset_name == 'amass_rend_take3' or self.dataset_name == 'movi' or self.dataset_name == 'surreal':
             kp_2d = convert_kps(self.db['joints2D'][start_index:end_index + 1], src='common', dst='spin')

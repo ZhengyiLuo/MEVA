@@ -28,7 +28,7 @@ TRAIN:
   DATA_2D_RATIO: 0.6
   DATASETS_2D: 
    - 'Insta'
-   - 'PoseTrack'
+  #  - 'PoseTrack'
    - 'PennAction'
   DATASETS_3D:
     - 'ThreeDPW'

@@ -17,7 +17,7 @@ def get_data_loaders(cfg):
     def get_3d_datasets(dataset_names):
         datasets = []
         for dataset_name in dataset_names:
-            db = eval(dataset_name)(set='train', seqlen=cfg.DATASET.SEQLEN, debug=cfg.DEBUG)
+            db = eval(dataset_name)(split='train', seqlen=cfg.DATASET.SEQLEN, debug=cfg.DEBUG)
             datasets.append(db)
         return ConcatDataset(datasets)
 
@@ -47,7 +47,7 @@ def get_data_loaders(cfg):
     )
 
     # ===== Evaluation dataset =====
-    valid_db = eval(cfg.TRAIN.DATASET_EVAL)(set='test', seqlen=cfg.DATASET.SEQLEN, debug=cfg.DEBUG)
+    valid_db = eval(cfg.TRAIN.DATASET_EVAL)(split='test', seqlen=cfg.DATASET.SEQLEN, debug=cfg.DEBUG)
 
     valid_loader = DataLoader(
         dataset=valid_db,

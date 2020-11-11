@@ -15,4 +15,3 @@ class PoseTrack(Dataset2D):
             debug=debug,
             overlap=overlap,
         )
-        print(f'{db_name} - number of dataset objects {self.__len__()}')

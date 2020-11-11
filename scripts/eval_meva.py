@@ -57,14 +57,14 @@ if __name__ == "__main__":
         use_residual=cfg.MODEL.TGRU.RESIDUAL,
         cfg = cfg.VAE_CFG,
     ).to(device)
-    
-    meva_dir = 'results/meva/10-11-2020_20-51-44_meva/model_best.pth.tar'
+
+    meva_dir = 'results/meva/11-11-2020_15-34-20_meva/model_best.pth.tar'
     checkpoint = torch.load(meva_dir)
     best_performance = checkpoint['performance']
     meva_model.load_state_dict(checkpoint['gen_state_dict'])
     meva_model.eval()
     print(f'==> Loaded pretrained model from {meva_dir}...')
-    print(f'Performance on 3DPW test set {best_performance}')
+    # print(f'Performance on 3DPW test/val  {best_performance}')
 
     dtype = torch.float
     image_size = 400

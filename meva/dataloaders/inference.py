@@ -79,7 +79,6 @@ class Inference(Dataset):
         for curr_idx in range(len(chunk_idxes)):
             chunk_idx = chunk_idxes[curr_idx]
             chunk_select = chunk_selects[curr_idx]
-            print(chunk_select)
             data_return = {}
             data_return["batch"] = norm_imgs[chunk_idx]
             data_return['cl'] = np.array(chunk_select)

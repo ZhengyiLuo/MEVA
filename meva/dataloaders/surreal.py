@@ -5,21 +5,19 @@ from meva.dataloaders import Dataset3D
 from meva.utils.video_config import SURREAL_DIR
 
 class Surreal(Dataset3D):
-    def __init__(self, set, seqlen, overlap=0.5, debug=False):
+    def __init__(self, split, seqlen, overlap=0.5, debug=False):
         db_name = 'surreal'
 
         # during testing we don't need data augmentation
         # but we can use it as an ensemble
-        set = "all"
-        is_train = set == 'train' or set == 'all'
+        split = "all"
+        is_train = split == 'train' or split == 'all'
         overlap = overlap if is_train else 0.
-        print(f'{db_name} Dataset overlap ratio: ', overlap)
         super(Surreal, self).__init__(
-            set=set,
+            split=split,
             folder=SURREAL_DIR,
             seqlen=seqlen,
             overlap=overlap,
             dataset_name=db_name,
             debug=debug,
         )
-        print(f'{db_name} - number of dataset objects {self.__len__()}')

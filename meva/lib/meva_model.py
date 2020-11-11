@@ -190,7 +190,6 @@ class Regressor(nn.Module):
         pred_pose, pred_shape, pred_cam =  self.iter_refine(x, init_pose=init_pose, init_shape=init_shape, init_cam=init_cam, n_iter=n_iter, J_regressor=J_regressor)
         pred_rotmat = convert_orth_6d_to_mat(pred_pose).view(batch_size , 24, 3, 3)
 
-
         ############### SMOOTH ###############
         # from meva.utils.geometry import smooth_pose_mat
         # pred_rotmat = torch.tensor(smooth_pose_mat(pred_rotmat.cpu().numpy(), ratio = 0.3)).float().to(pred_rotmat.device)
@@ -268,11 +267,11 @@ class MEVA(nn.Module):
             use_residual=False,
         )
         
-        if self.vae_cfg.model_specs['model_name'] == "VAErec":
-            fc1 = nn.Linear(vae_hidden_size, 256)
-            act = nn.Tanh()
-            fc2 = nn.Linear(256, 144)
-            self.vae_init_mlp = nn.Sequential(fc1, act, fc2)
+        # if self.vae_cfg.model_specs['model_name'] == "VAErec":
+        fc1 = nn.Linear(vae_hidden_size, 256)
+        act = nn.Tanh()
+        fc2 = nn.Linear(256, 144)
+        self.vae_init_mlp = nn.Sequential(fc1, act, fc2)
 
         self.regressor = Regressor()
         mean_params = np.load(SMPL_MEAN_PARAMS)
