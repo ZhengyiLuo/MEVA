@@ -6,10 +6,7 @@
 
 [This repo is still under construction]
 ---
-<p float="center">
-   <img src="https://s2.gifyu.com/images/teaser.gif" width="49%" />
-</p>
-
+![Loading MEVA teaser](media/meva_teaser.gif "MEVA teaser")
 
 **3D Human Motion Estimation via Motion Compression and Refinement**
 
