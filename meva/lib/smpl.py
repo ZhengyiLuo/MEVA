@@ -10,8 +10,8 @@ from smplx.lbs import vertices2joints
 from scipy.spatial.transform import Rotation as sRot
 
 from meva.utils.transform_utils import vertizalize_smpl_root
+from meva.utils.video_config import VIBE_DATA_DIR
 
-VIBE_DATA_DIR = "/hdd/zen/dev/ActMix/actmix/DataGen/MotionCapture/VIBE/data/vibe_data"
 
 # Map joints to SMPL joints
 JOINT_MAP = {

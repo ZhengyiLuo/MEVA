@@ -13,15 +13,18 @@ import joblib
 import shutil
 import colorsys
 import argparse
+import yaml
 import numpy as np
 from tqdm import tqdm
 from multi_person_tracker import MPT
 from torch.utils.data import DataLoader
 
+
 from meva.lib.meva_model import MEVA, MEVA_demo
 from meva.utils.renderer import Renderer
 from meva.utils.kp_utils import convert_kps
 from meva.dataloaders.inference import Inference
+from meva.utils.video_config import parse_args, update_cfg
 from meva.utils.demo_utils import (
     convert_crop_cam_to_orig_img,
     prepare_rendering_results,
@@ -82,14 +85,24 @@ def main(args):
     
 
     # ========= MEVA Model ========= #
+    pretrained_file = f"results/meva/{args.exp}/model_best.pth.tar"
+
+    config_file = osp.join("meva/cfg", f"{args.cfg}.yml")
+    cfg = update_cfg(config_file)
     model = MEVA_demo(
-        90, hidden_size=1024, add_linear=True, use_residual=True, bidirectional=True, n_layers=2, batch_size=32
+        n_layers=cfg.MODEL.TGRU.NUM_LAYERS,
+        batch_size=cfg.TRAIN.BATCH_SIZE,
+        seqlen=cfg.DATASET.SEQLEN,
+        hidden_size=cfg.MODEL.TGRU.HIDDEN_SIZE,
+        add_linear=cfg.MODEL.TGRU.ADD_LINEAR,
+        bidirectional=cfg.MODEL.TGRU.BIDIRECTIONAL,
+        use_residual=cfg.MODEL.TGRU.RESIDUAL,
+        cfg = cfg.VAE_CFG,
     ).to(device)
-    # pretrained_file = "results/meva/30-06-2020_13-35-09_meva/model_best.pth.tar"
-    pretrained_file = "results/meva/train_meva/model_best.pth.tar"
-    # pretrained_file = 'results/meva/25-08-2020_01-25-59_meva/model_best.pth.tar'
+
+    
     ckpt = torch.load(pretrained_file)
-    print(f'Performance of pretrained model on 3DPW: {ckpt["performance"]}')
+    # print(f'Performance of pretrained model on 3DPW: {ckpt["performance"]}')
     ckpt = ckpt['gen_state_dict']
     model.load_state_dict(ckpt)
     model.eval()
@@ -215,6 +228,7 @@ def main(args):
         for frame_idx in tqdm(range(len(image_file_names))):
             img_fname = image_file_names[frame_idx]
             img = cv2.imread(img_fname)
+            img = np.zeros(img.shape)
 
             if args.sideview:
                 side_img = np.zeros_like(img)
@@ -278,29 +292,22 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--vid_file', type=str,
-                        help='input video path')
-    
-    parser.add_argument('--output_folder', type=str,
-                        help='output folder to write results')
+    parser.add_argument('--vid_file', type=str, help='input video path')
+    parser.add_argument('--cfg', type=str, help='config file')
+    parser.add_argument('--exp', type=str, help='experience name')
+    parser.add_argument('--output_folder', type=str, help='output folder to write results')
 
-    parser.add_argument('--detector', type=str, default='yolo', choices=['yolo', 'maskrcnn'],
-                        help='object detector to be used for bbox tracking')
+    parser.add_argument('--detector', type=str, default='yolo', choices=['yolo', 'maskrcnn'], help='object detector to be used for bbox tracking')
 
-    parser.add_argument('--yolo_img_size', type=int, default=416,
-                        help='input image size for yolo detector')
+    parser.add_argument('--yolo_img_size', type=int, default=416, help='input image size for yolo detector')
 
-    parser.add_argument('--tracker_batch_size', type=int, default=12,
-                        help='batch size of object detector used for bbox tracking')
+    parser.add_argument('--tracker_batch_size', type=int, default=12, help='batch size of object detector used for bbox tracking')
 
-    parser.add_argument('--vibe_batch_size', type=int, default=90,
-                        help='batch size of VIBE')
+    parser.add_argument('--vibe_batch_size', type=int, default=90, help='batch size of VIBE')
 
-    parser.add_argument('--display', action='store_true',
-                        help='visualize the results of each step during demo')
+    parser.add_argument('--display', action='store_true', help='visualize the results of each step during demo')
 
-    parser.add_argument('--no_render', action='store_true',
-                        help='disable final rendering of output video.')
+    parser.add_argument('--no_render', action='store_true', help='disable final rendering of output video.')
 
     parser.add_argument('--wireframe', action='store_true',
                         help='render all meshes as wireframes.')

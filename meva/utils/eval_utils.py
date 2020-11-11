@@ -55,6 +55,22 @@ def compute_error_accel(joints_gt, joints_pred, vis=None):
     return np.mean(normed[new_vis], axis=1)
 
 
+def compute_vel(joints):
+    velocities = joints[1:] - joints[:-1]
+    velocity_normed = np.linalg.norm(velocities, axis=2)
+    return np.mean(velocity_normed, axis=1)
+
+
+def compute_error_vel(joints_gt, joints_pred, vis = None):
+    vel_gt = joints_gt[1:] - joints_gt[:-1] 
+    vel_pred = joints_pred[1:] - joints_pred[:-1]
+    normed = np.linalg.norm(vel_pred - vel_gt, axis=2)
+
+    if vis is None:
+        new_vis = np.ones(len(normed), dtype=bool)
+    return np.mean(normed[new_vis], axis=1)
+    
+
 def compute_error_verts(pred_verts, target_verts=None, target_theta=None):
     """
     Computes MPJPE over 6890 surface vertices.
@@ -255,6 +271,16 @@ def batch_compute_similarity_transform_torch(S1, S2):
     return S1_hat
 
 
+def align_by_root(joints):
+    """
+    Assumes joints is 24 x 3 in SMPL order.
+    Subtracts the location of the root joint from all the other joints
+    """
+    root = joints[0, :]
+
+    return joints - root
+
+
 def align_by_pelvis(joints):
     """
     Assumes joints is 14 x 3 in LSP order.
@@ -269,6 +295,19 @@ def align_by_pelvis(joints):
     return joints - np.expand_dims(pelvis, axis=0)
 
 
+def align_by_pelvis_batch(joints):
+    """
+    Assumes joints is 14 x 3 in LSP order.
+    Then hips are: [3, 2]
+    Takes mid point of these points, then subtracts it.
+    """
+
+    left_id = 2
+    right_id = 3
+
+    pelvis = (joints[:, left_id, :] + joints[:, right_id, :]) / 2.0
+    return joints - pelvis[:, None, :]
+
 def compute_errors(gt3ds, preds):
     """
     Gets MPJPE after pelvis alignment + MPJPE after Procrustes.
@@ -278,11 +317,13 @@ def compute_errors(gt3ds, preds):
       - preds: N x 14 x 3
     """
     errors, errors_pa = [], []
-    for i, (gt3d, pred) in enumerate(zip(gt3ds, preds)):
+    # Root align.
+    gt3ds = align_by_pelvis_batch(gt3ds)
+    preds = align_by_pelvis_batch(preds)
+
+    for i, (gt3d, pred3d) in enumerate(zip(gt3ds, preds)):
         gt3d = gt3d.reshape(-1, 3)
-        # Root align.
-        gt3d = align_by_pelvis(gt3d)
-        pred3d = align_by_pelvis(pred)
+        
 
         joint_error = np.sqrt(np.sum((gt3d - pred3d)**2, axis=1))
         errors.append(np.mean(joint_error))
@@ -291,7 +332,12 @@ def compute_errors(gt3ds, preds):
         pred3d_sym = compute_similarity_transform(pred3d, gt3d)
         pa_error = np.sqrt(np.sum((gt3d - pred3d_sym)**2, axis=1))
         errors_pa.append(np.mean(pa_error))
-    return errors, errors_pa
+
+    
+    error_vel = compute_error_vel(gt3ds, preds)
+    error_acc = compute_error_accel(gt3ds, preds)
+
+    return np.array(errors), np.array(errors_pa), error_vel, error_acc
 
 def smpl_to_joints(input_pose, betas, smpl,  J_regressor = None):
     # import pdb       
@@ -324,33 +370,114 @@ def smpl_to_joints(input_pose, betas, smpl,  J_regressor = None):
     }
     return output
 
-def compute_metric_on_seqs(seq_pred, beta_pred, seq_gt, beta_gt, smpl, J_regressor):
-    output_pred = smpl_to_joints(seq_pred, beta_pred, smpl, J_regressor)
-    output_gt = smpl_to_joints(seq_gt, beta_gt, smpl, J_regressor)
-    metrics = compute_metric_on_outputs(output_gt=output_gt, output_pred=output_pred)
-    return metrics
+def get_global_rot_smpl(pose_rotmat, smpl):
+    num_joints = 24
+    batch_size = pose_rotmat.shape[0]
+    kintree_parents = smpl.parents
+    results = []
+    root_rot = pose_rotmat[:,0,:]
+    results.append(root_rot)
+    for i in range(num_joints - 1):
+        i_val = int(i + 1)
+        joint_rot = pose_rotmat[:, i_val]
 
-def compute_metric_on_outputs(output_gt, output_pred):
-    m2mm = 1000
-    verts_gt = output_gt['verts']
-    pt3d_gt = output_gt['kp_3d']
+        # Find the parent for each joint
+        parent = kintree_parents[i_val]
 
-    verts_pred = output_pred['verts']
-    pt3d_pred = output_pred['kp_3d']
+        joint_rel_transform = joint_rot
+        glob_transf_mat = np.matmul(results[parent], joint_rel_transform)
+        results.append(glob_transf_mat)
+
+    results = np.stack(results, axis = 1)
     
-    pred_pelvis = (pt3d_pred[:,[2],:] + pt3d_pred[:,[3],:]) / 2.0
-    target_pelvis = (pt3d_gt[:,[2],:] + pt3d_gt[:,[3],:]) / 2.0
-    pt3d_pred -= pred_pelvis
-    pt3d_gt -= target_pelvis
+    return results
 
-    errors = torch.sqrt(((pt3d_gt - pt3d_pred) ** 2).sum(dim=-1)).mean(dim=-1).cpu().numpy()
-    # S1_hat = batch_compute_similarity_transform_torch(pt3d_pred, pt3d_gt)
-    # errors_pa = torch.sqrt(((S1_hat - pt3d_gt) ** 2).sum(dim=-1)).mean(dim=-1).cpu().numpy()
 
-    pve = np.mean(compute_error_verts(verts_pred.cpu().numpy(), target_verts=verts_gt.cpu().numpy())) * m2mm
-    accel = np.mean(compute_accel(pt3d_pred.cpu().numpy())) * m2mm
-    accel_err = np.mean(compute_error_accel(joints_pred=pt3d_pred.cpu().numpy(), joints_gt=pt3d_gt.cpu().numpy())) * m2mm
-    mpjpe = np.mean(errors) * m2mm
+# def compute_metric_on_seqs(seq_pred, beta_pred, seq_gt, beta_gt, smpl, J_regressor):
+#     output_pred = smpl_to_joints(seq_pred, beta_pred, smpl, J_regressor)
+#     output_gt = smpl_to_joints(seq_gt, beta_gt, smpl, J_regressor)
+#     metrics = compute_metric_on_outputs(output_gt=output_gt, output_pred=output_pred)
+#     return metrics
+
+# def compute_metric_on_outputs(output_gt, output_pred):
+#     m2mm = 1000
+#     verts_gt = output_gt['verts']
+#     pt3d_gt = output_gt['kp_3d']
+
+#     verts_pred = output_pred['verts']
+#     pt3d_pred = output_pred['kp_3d']
     
-    # pa_mpjpe = np.mean(errors_pa) * m2mm
-    return [mpjpe, pve, accel_err]
+#     pred_pelvis = (pt3d_pred[:,[2],:] + pt3d_pred[:,[3],:]) / 2.0
+#     target_pelvis = (pt3d_gt[:,[2],:] + pt3d_gt[:,[3],:]) / 2.0
+#     pt3d_pred -= pred_pelvis
+#     pt3d_gt -= target_pelvis
+
+#     errors = torch.sqrt(((pt3d_gt - pt3d_pred) ** 2).sum(dim=-1)).mean(dim=-1).cpu().numpy()
+#     # S1_hat = batch_compute_similarity_transform_torch(pt3d_pred, pt3d_gt)
+#     # errors_pa = torch.sqrt(((S1_hat - pt3d_gt) ** 2).sum(dim=-1)).mean(dim=-1).cpu().numpy()
+
+#     pve = np.mean(compute_error_verts(verts_pred.cpu().numpy(), target_verts=verts_gt.cpu().numpy())) * m2mm
+#     accel = np.mean(compute_accel(pt3d_pred.cpu().numpy())) * m2mm
+#     accel_err = np.mean(compute_error_accel(joints_pred=pt3d_pred.cpu().numpy(), joints_gt=pt3d_gt.cpu().numpy())) * m2mm
+#     mpjpe = np.mean(errors) * m2mm
+    
+#     # pa_mpjpe = np.mean(errors_pa) * m2mm
+#     return [mpjpe, pve, accel_err]
+
+
+
+def joint_angle_error(pred_mat, gt_mat):
+    """
+    Compute the geodesic distance between the two input matrices.
+    :param pred_mat: predicted rotation matrices. Shape: ( Seq, 9g, 3, 3)
+    :param gt_mat: ground truth rotation matrices. Shape: ( Seq, 24, 3, 3)
+    :return: Mean geodesic distance between input matrices.
+    """
+
+    gt_mat = gt_mat[:, SMPL_OR_JOINTS, :, :]
+
+    # Reshape the matrices into B x 3 x 3 arrays
+    r1 = np.reshape(pred_mat, [-1, 3, 3])
+    r2 = np.reshape(gt_mat, [-1, 3, 3])
+
+    # Transpose gt matrices
+    r2t = np.transpose(r2, [0, 2, 1])
+
+    # compute R1 * R2.T, if prediction and target match, this will be the identity matrix
+    r = np.matmul(r1, r2t)
+
+    angles = []
+    # Convert rotation matrix to axis angle representation and find the angle
+    for i in range(r1.shape[0]):
+        aa, _ = cv2.Rodrigues(r[i])
+        angles.append(np.linalg.norm(aa))
+
+    return np.mean(np.array(angles))
+
+
+def compute_auc(xpts, ypts):
+    """
+    Calculates the AUC.
+    :param xpts: Points on the X axis - the threshold values
+    :param ypts: Points on the Y axis - the pck value for that threshold
+    :return: The AUC value computed by integrating over pck values for all thresholds
+    """
+    a = np.min(xpts)
+    b = np.max(xpts)
+    from scipy import integrate
+    myfun = lambda x: np.interp(x, xpts, ypts)
+    auc = integrate.quad(myfun, a, b)[0]
+    return auc
+
+
+def compute_pck(errors, THRESHOLD):
+    """
+    Computes Percentage-Correct Keypoints
+    :param errors: N x 12 x 1
+    :param THRESHOLD: Threshold value used for PCK
+    :return: the final PCK value
+    """
+    errors_pck = errors <= THRESHOLD
+    errors_pck = np.mean(errors_pck, axis=1)
+    return np.mean(errors_pck)
+ 

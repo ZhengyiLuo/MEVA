@@ -139,7 +139,7 @@ class Regressor(nn.Module):
         self.register_buffer('init_shape', init_shape)
         self.register_buffer('init_cam', init_cam)
     
-    def set_gender(self, gender="netural", use_smplx = False):
+    def set_gender(self, gender="neutral", use_smplx = False):
         if use_smplx:
             from smplx import SMPL
             self.smpl = SMPL(
@@ -239,12 +239,11 @@ class MEVA(nn.Module):
             add_linear=False,
             bidirectional=False,
             use_residual=True,
-            pretrained=osp.join(VIBE_DATA_DIR, 'spin_model_checkpoint.pth.tar'),
-            cfg = "train_vae"
+            cfg = "vae_rec_1"
     ):
         super(MEVA, self).__init__()
 
-        vae_cfg = Config(cfg)
+        self.vae_cfg = vae_cfg = Config(cfg)
         self.seqlen = seqlen
         self.batch_size = batch_size
         
@@ -268,17 +267,16 @@ class MEVA(nn.Module):
             output_size = vae_hidden_size, 
             use_residual=False,
         )
-
-        fc1 = nn.Linear(vae_hidden_size, 256)
-        act = nn.Tanh()
-        fc2 = nn.Linear(256, 144)
-        self.vae_init_mlp = nn.Sequential(fc1, act, fc2)
+        
+        if self.vae_cfg.model_specs['model_name'] == "VAErec":
+            fc1 = nn.Linear(vae_hidden_size, 256)
+            act = nn.Tanh()
+            fc2 = nn.Linear(256, 144)
+            self.vae_init_mlp = nn.Sequential(fc1, act, fc2)
 
         self.regressor = Regressor()
         mean_params = np.load(SMPL_MEAN_PARAMS)
-
         
-        self.pretrained = pretrained
         self.first_in_flag = True
 
         self.smpl = SMPL(
@@ -286,8 +284,9 @@ class MEVA(nn.Module):
             batch_size=64,
             create_transl=False
         )
+        self.set_gender()
 
-    def set_gender(self, gender="netural", use_smplx = False):
+    def set_gender(self, gender="neutral", use_smplx = False):
         self.regressor.set_gender(gender, use_smplx)
     
     def forward(self, input, J_regressor=None):
@@ -301,24 +300,19 @@ class MEVA(nn.Module):
 
         motion_z = self.motion_encoder(feature).mean(dim = 1)
 
-        
-        ##### Window Fix #####
-        # vae_init_pose = self.vae_init_mlp(motion_z)
+        if self.vae_cfg.model_specs['model_name'] == "VAErec":
+            # smpl_output = self.regressor(feature[:, 0, :], J_regressor=J_regressor)
+            # vae_init_pose = convert_mat_to_6d(smpl_output[0]['rotmat']).reshape(batch_size, 144)
+            vae_init_pose = self.vae_init_mlp(motion_z)
+            X_r = self.vae_model.decode(vae_init_pose[None, :, :], motion_z)
+        elif self.vae_cfg.model_specs['model_name'] == "VAErecV2":
+            X_r = self.vae_model.decode(motion_z)
 
-        # smpl_output = self.regressor(feature[:, 0, :], J_regressor=J_regressor)
-        # vae_init_pose = convert_mat_to_6d(smpl_output[0]['rotmat']).reshape(batch_size, 144)
-        # X_r = self.vae_model.decode(vae_init_pose[None, :, :], motion_z)
-        ##### Window Fix #####
-
-        
-        X_r = self.vae_model.decode(motion_z)
         X_r = X_r.permute(1, 0, 2)[:,:seqlen,:]
         
 
         feature = feature.reshape(-1, feature.size(-1))
-
         init_pose = X_r.reshape(-1, X_r.shape[-1])
-
 
         ## Official
         smpl_output = self.regressor(feature, J_regressor=J_regressor, init_pose = init_pose)
@@ -347,7 +341,7 @@ class MEVA_demo(MEVA):
             cfg = "vae_rec_1"
     ):
         super().__init__(seqlen, batch_size, n_layers, hidden_size, add_linear, \
-            bidirectional, use_residual, pretrained, cfg)
+            bidirectional, use_residual, cfg)
 
         self.pretrained = pretrained
         
