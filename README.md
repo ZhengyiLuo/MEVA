@@ -6,8 +6,8 @@
 
 [This repo is still under construction]
 ---
-![Loading MEVA teaser](media/meva_teaser.gif "MEVA teaser")
 
+![Loading MEVA teaser](media/meva_teaser.gif "MEVA teaser")
 **3D Human Motion Estimation via Motion Compression and Refinement**
 
 **ACCV 2020, Oral**  
