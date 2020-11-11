@@ -7,19 +7,18 @@
 [This repo is still under construction]
 ---
 
-<p float="center">
-</p>
 
-<p float="center">
+
+<div float="center">
   <img src="media/meva_teaser.gif" />
-</p>
+</div>
 
 
 
 **3D Human Motion Estimation via Motion Compression and Refinement**
 
 **ACCV 2020, Oral**  
-[[Project website](https://zhengyiluo.github.io/projects/meva/)][[Quantatitive Demo](https://youtu.be/YBb9NDz3ngM)][[10min Talk](https://youtu.be/-TN3NRpCEc0)]
+[[Project website](https://zhengyiluo.github.io/projects/meva/)][[Quantitative Demo](https://youtu.be/YBb9NDz3ngM)][[10min Talk](https://youtu.be/-TN3NRpCEc0)]
 
 
 ## Notable
@@ -28,13 +27,26 @@ MEVA (Motion Estimation vis Variational Autoencoding) is a video-based 3D human 
 
 
 ## Updates
-
+- November 11, 2020 – 14:16 Inference code uploaded
 
 ## Getting Started
 
+### Install:
+#### Environment
+- Tested OS: Linux
+- Python >= 3.6
 
-## Running inference
+### How to install
+Install the dependencies:
+```
+pip install -r requirements.txt
+```
 
+### Running inference/Demo
+
+```
+python scripts/run_meva_on_video.py --cfg train_meva_2  --vid_file zen_talking_phone.mp4  --output_folder results/output --exp 10-11-2020_20-51-44_meva
+```
 
 ## Training 
 
