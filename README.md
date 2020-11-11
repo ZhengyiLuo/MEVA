@@ -7,7 +7,7 @@
 [This repo is still under construction]
 ---
 <p float="center">
-  <a href="https://gifyu.com/image/iK5A"><img src="https://s2.gifyu.com/images/teaser.th.gif" alt="teaser.gif" border="0" /></a>
+  <img src="https://s2.gifyu.com/images/teaser.th.gif" alt="teaser.gif" border="0" />
 </p>
 
 
