@@ -111,7 +111,7 @@ def main(args):
 
     
     # ========= Run MEVA on each person ========= #
-    bbox_scale = 1.1
+    bbox_scale = 1.2
     print(f'Running MEVA on each tracklet...')
     vibe_time = time.time()
     vibe_results = {}
