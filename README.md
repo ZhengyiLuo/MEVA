@@ -104,4 +104,4 @@ Notice that this repo builds upon a number of previous great works (especially, 
 - Dataloaders, part of the loss function, data pre-processing are from: [VIBE](https://github.com/mkocabas/VIBE) 
 - SMPL models and layer is from: [SMPL-X model](https://github.com/vchoutas/smplx)
 - Feature extractors are from: [SPIN](https://github.com/nkolot/SPIN)
-- Some NN modules are from: [DLOW](https://github.com/Khrylx/DLow)
+- NN modules are from (khrylib): [DLOW](https://github.com/Khrylx/DLow)
