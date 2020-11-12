@@ -10,7 +10,6 @@
 
 
 <div float="center">
-    <img src="media/teaser.png" />
   <img src="media/meva_teaser.gif" />
 </div>
 
