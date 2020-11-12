@@ -67,144 +67,144 @@ def main(args):
 
     # ========= Run tracking ========= #
     
-    # # run multi object tracker
-    # mot = MPT(
-    #     device=device,
-    #     batch_size=args.tracker_batch_size,
-    #     display=args.display,
-    #     detector_type=args.detector,
-    #     output_format='dict',
-    #     yolo_img_size=args.yolo_img_size,
-    # )
-    # tracking_results = mot(image_folder)
+    # run multi object tracker
+    mot = MPT(
+        device=device,
+        batch_size=args.tracker_batch_size,
+        display=args.display,
+        detector_type=args.detector,
+        output_format='dict',
+        yolo_img_size=args.yolo_img_size,
+    )
+    tracking_results = mot(image_folder)
 
-    # # remove tracklets if num_frames is less than MIN_NUM_FRAMES
-    # for person_id in list(tracking_results.keys()):
-    #     if tracking_results[person_id]['frames'].shape[0] < MIN_NUM_FRAMES:
-    #         del tracking_results[person_id]
+    # remove tracklets if num_frames is less than MIN_NUM_FRAMES
+    for person_id in list(tracking_results.keys()):
+        if tracking_results[person_id]['frames'].shape[0] < MIN_NUM_FRAMES:
+            del tracking_results[person_id]
     
 
-    # # ========= MEVA Model ========= #
-    # pretrained_file = f"results/meva/{args.exp}/model_best.pth.tar"
+    # ========= MEVA Model ========= #
+    pretrained_file = f"results/meva/{args.exp}/model_best.pth.tar"
 
-    # config_file = osp.join("meva/cfg", f"{args.cfg}.yml")
-    # cfg = update_cfg(config_file)
-    # model = MEVA_demo(
-    #     n_layers=cfg.MODEL.TGRU.NUM_LAYERS,
-    #     batch_size=cfg.TRAIN.BATCH_SIZE,
-    #     seqlen=cfg.DATASET.SEQLEN,
-    #     hidden_size=cfg.MODEL.TGRU.HIDDEN_SIZE,
-    #     add_linear=cfg.MODEL.TGRU.ADD_LINEAR,
-    #     bidirectional=cfg.MODEL.TGRU.BIDIRECTIONAL,
-    #     use_residual=cfg.MODEL.TGRU.RESIDUAL,
-    #     cfg = cfg.VAE_CFG,
-    # ).to(device)
-
-    
-    # ckpt = torch.load(pretrained_file)
-    # # print(f'Performance of pretrained model on 3DPW: {ckpt["performance"]}')
-    # ckpt = ckpt['gen_state_dict']
-    # model.load_state_dict(ckpt)
-    # model.eval()
-    # print(f'Loaded pretrained weights from \"{pretrained_file}\"')
-    # # ========= MEVA Model ========= #
+    config_file = osp.join("meva/cfg", f"{args.cfg}.yml")
+    cfg = update_cfg(config_file)
+    model = MEVA_demo(
+        n_layers=cfg.MODEL.TGRU.NUM_LAYERS,
+        batch_size=cfg.TRAIN.BATCH_SIZE,
+        seqlen=cfg.DATASET.SEQLEN,
+        hidden_size=cfg.MODEL.TGRU.HIDDEN_SIZE,
+        add_linear=cfg.MODEL.TGRU.ADD_LINEAR,
+        bidirectional=cfg.MODEL.TGRU.BIDIRECTIONAL,
+        use_residual=cfg.MODEL.TGRU.RESIDUAL,
+        cfg = cfg.VAE_CFG,
+    ).to(device)
 
     
-    # # ========= Run MEVA on each person ========= #
-    # bbox_scale = 1.1
-    # print(f'Running MEVA on each tracklet...')
-    # vibe_time = time.time()
-    # vibe_results = {}
-    # for person_id in tqdm(list(tracking_results.keys())):
-    #     bboxes = joints2d = None
+    ckpt = torch.load(pretrained_file)
+    # print(f'Performance of pretrained model on 3DPW: {ckpt["performance"]}')
+    ckpt = ckpt['gen_state_dict']
+    model.load_state_dict(ckpt)
+    model.eval()
+    print(f'Loaded pretrained weights from \"{pretrained_file}\"')
+    # ========= MEVA Model ========= #
 
-    #     bboxes = tracking_results[person_id]['bbox']
-    #     frames = tracking_results[person_id]['frames']
+    
+    # ========= Run MEVA on each person ========= #
+    bbox_scale = 1.1
+    print(f'Running MEVA on each tracklet...')
+    vibe_time = time.time()
+    vibe_results = {}
+    for person_id in tqdm(list(tracking_results.keys())):
+        bboxes = joints2d = None
 
-    #     dataset = Inference(
-    #         image_folder=image_folder,
-    #         frames=frames,
-    #         bboxes=bboxes,
-    #         joints2d=joints2d,
-    #         scale=bbox_scale,
-    #     )
+        bboxes = tracking_results[person_id]['bbox']
+        frames = tracking_results[person_id]['frames']
 
-    #     bboxes = dataset.bboxes
-    #     frames = dataset.frames
+        dataset = Inference(
+            image_folder=image_folder,
+            frames=frames,
+            bboxes=bboxes,
+            joints2d=joints2d,
+            scale=bbox_scale,
+        )
 
-    #     dataloader = DataLoader(dataset, batch_size=args.vibe_batch_size, num_workers=16, shuffle = False)
+        bboxes = dataset.bboxes
+        frames = dataset.frames
 
-    #     with torch.no_grad():
+        dataloader = DataLoader(dataset, batch_size=args.vibe_batch_size, num_workers=16, shuffle = False)
 
-    #         pred_cam, pred_verts, pred_pose, pred_betas, pred_joints3d, norm_joints2d = [], [], [], [], [], []
-    #         data_chunks = dataset.iter_data() 
+        with torch.no_grad():
 
-    #         for idx in range(len(data_chunks)):
-    #             batch = data_chunks[idx]
-    #             batch_image = batch['batch'].unsqueeze(0)
-    #             cl = batch['cl']
-    #             batch_image = batch_image.to(device)
+            pred_cam, pred_verts, pred_pose, pred_betas, pred_joints3d, norm_joints2d = [], [], [], [], [], []
+            data_chunks = dataset.iter_data() 
 
-    #             batch_size, seqlen = batch_image.shape[:2]
-    #             output = model(batch_image)[-1]
+            for idx in range(len(data_chunks)):
+                batch = data_chunks[idx]
+                batch_image = batch['batch'].unsqueeze(0)
+                cl = batch['cl']
+                batch_image = batch_image.to(device)
 
-    #             pred_cam.append(output['theta'][0, cl[0]: cl[1], :3])
-    #             pred_verts.append(output['verts'][0, cl[0]: cl[1]])
-    #             pred_pose.append(output['theta'][0,cl[0]: cl[1],3:75])
-    #             pred_betas.append(output['theta'][0, cl[0]: cl[1],75:])
-    #             pred_joints3d.append(output['kp_3d'][0, cl[0]: cl[1]])
+                batch_size, seqlen = batch_image.shape[:2]
+                output = model(batch_image)[-1]
 
-
-    #         pred_cam = torch.cat(pred_cam, dim=0)
-    #         pred_verts = torch.cat(pred_verts, dim=0)
-    #         pred_pose = torch.cat(pred_pose, dim=0)
-    #         pred_betas = torch.cat(pred_betas, dim=0)
-    #         pred_joints3d = torch.cat(pred_joints3d, dim=0)
-
-    #         del batch_image
+                pred_cam.append(output['theta'][0, cl[0]: cl[1], :3])
+                pred_verts.append(output['verts'][0, cl[0]: cl[1]])
+                pred_pose.append(output['theta'][0,cl[0]: cl[1],3:75])
+                pred_betas.append(output['theta'][0, cl[0]: cl[1],75:])
+                pred_joints3d.append(output['kp_3d'][0, cl[0]: cl[1]])
 
 
-    #     # ========= Save results to a pickle file ========= #
-    #     pred_cam = pred_cam.cpu().numpy()
-    #     pred_verts = pred_verts.cpu().numpy()
-    #     pred_pose = pred_pose.cpu().numpy()
-    #     pred_betas = pred_betas.cpu().numpy()
-    #     pred_joints3d = pred_joints3d.cpu().numpy()
+            pred_cam = torch.cat(pred_cam, dim=0)
+            pred_verts = torch.cat(pred_verts, dim=0)
+            pred_pose = torch.cat(pred_pose, dim=0)
+            pred_betas = torch.cat(pred_betas, dim=0)
+            pred_joints3d = torch.cat(pred_joints3d, dim=0)
 
-    #     orig_cam = convert_crop_cam_to_orig_img(
-    #         cam=pred_cam,
-    #         bbox=bboxes,
-    #         img_width=orig_width,
-    #         img_height=orig_height
-    #     )
+            del batch_image
 
-    #     output_dict = {
-    #         'pred_cam': pred_cam,
-    #         'orig_cam': orig_cam,
-    #         'verts': pred_verts,
-    #         'pose': pred_pose,
-    #         'betas': pred_betas,
-    #         'joints3d': pred_joints3d,
-    #         'joints2d': joints2d,
-    #         'bboxes': bboxes,
-    #         'frame_ids': frames,
-    #     }
 
-    #     vibe_results[person_id] = output_dict
+        # ========= Save results to a pickle file ========= #
+        pred_cam = pred_cam.cpu().numpy()
+        pred_verts = pred_verts.cpu().numpy()
+        pred_pose = pred_pose.cpu().numpy()
+        pred_betas = pred_betas.cpu().numpy()
+        pred_joints3d = pred_joints3d.cpu().numpy()
 
-    # del model
+        orig_cam = convert_crop_cam_to_orig_img(
+            cam=pred_cam,
+            bbox=bboxes,
+            img_width=orig_width,
+            img_height=orig_height
+        )
 
-    # end = time.time()
-    # fps = num_frames / (end - vibe_time)
+        output_dict = {
+            'pred_cam': pred_cam,
+            'orig_cam': orig_cam,
+            'verts': pred_verts,
+            'pose': pred_pose,
+            'betas': pred_betas,
+            'joints3d': pred_joints3d,
+            'joints2d': joints2d,
+            'bboxes': bboxes,
+            'frame_ids': frames,
+        }
 
-    # print(f'VIBE FPS: {fps:.2f}')
-    # total_time = time.time() - total_time
-    # print(f'Total time spent: {total_time:.2f} seconds (including model loading time).')
-    # print(f'Total FPS (including model loading time): {num_frames / total_time:.2f}.')
+        vibe_results[person_id] = output_dict
 
-    # print(f'Saving output results to \"{os.path.join(output_path, "vibe_output.pkl")}\".')
+    del model
 
-    # joblib.dump(vibe_results, os.path.join(output_path, "vibe_output.pkl"))
+    end = time.time()
+    fps = num_frames / (end - vibe_time)
+
+    print(f'VIBE FPS: {fps:.2f}')
+    total_time = time.time() - total_time
+    print(f'Total time spent: {total_time:.2f} seconds (including model loading time).')
+    print(f'Total FPS (including model loading time): {num_frames / total_time:.2f}.')
+
+    print(f'Saving output results to \"{os.path.join(output_path, "vibe_output.pkl")}\".')
+
+    joblib.dump(vibe_results, os.path.join(output_path, "vibe_output.pkl"))
 
     vibe_results = joblib.load(os.path.join(output_path, "vibe_output.pkl"))
 
