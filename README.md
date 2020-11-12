@@ -60,6 +60,8 @@ python scripts/run_meva_on_video.py --cfg train_meva_2  --vid_file zen_talking_p
 
 ## Training 
 
+Training code coming soon!
+
 ### Prepare Datasets
 
 
@@ -74,6 +76,12 @@ Procrustes Aligned Mean Per Joint Position Error (PA-MPJPE) in mm.
 | Temporal HMR   | 76.7 |     89.8     | 56.8 |
 | VIBE           | 56.5 |     63.4     | 41.5 |
 | MEVA           | **52.6** |     **62.6**     | 48.1 |
+
+Eval code coming soon!
+
+## Known issues
+1. Visulization scale seems off somehow (the humanoid is not scaled properly), still debugging!
+
 
 ## Citation
 If you find our work useful in your research, please cite our paper [MEVA](https://arxiv.org/abs/2008.03789):
