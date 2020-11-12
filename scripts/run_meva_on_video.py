@@ -206,7 +206,7 @@ def main(args):
 
     joblib.dump(vibe_results, os.path.join(output_path, "vibe_output.pkl"))
 
-    vibe_results = joblib.load(os.path.join(output_path, "vibe_output.pkl"))
+    # vibe_results = joblib.load(os.path.join(output_path, "vibe_output.pkl"))
 
     if not args.no_render:
         # ========= Render results as a single video ========= #
