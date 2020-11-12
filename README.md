@@ -56,7 +56,7 @@ bash scripts/prepare_data.sh
 Command:
 
 ```
-python scripts/run_meva_on_video.py --cfg train_meva_2  --vid_file zen_talking_phone.mp4  --output_folder results/output --exp 10-11-2020_20-51-44_meva
+python scripts/run_meva_on_video.py --cfg train_meva_2  --vid_file zen_talking_phone.mp4  --output_folder results/output --exp train_meva_2
 ```
 
 ## Training 
@@ -66,7 +66,7 @@ python scripts/run_meva_on_video.py --cfg train_meva_2  --vid_file zen_talking_p
 
 ## Evaluation
 
-<!-- Here we compare MEVA with recent state-of-the-art methods on 3D pose estimation datasets. Evaluation metric is
+Here we compare MEVA with recent state-of-the-art methods on 3D pose estimation datasets. Evaluation metric is
 Procrustes Aligned Mean Per Joint Position Error (PA-MPJPE) in mm.
 
 | Models         | 3DPW &#8595; | MPI-INF-3DHP &#8595; | H36M &#8595; |
@@ -74,7 +74,7 @@ Procrustes Aligned Mean Per Joint Position Error (PA-MPJPE) in mm.
 | SPIN           | 59.2 |     67.5     | **41.1** |
 | Temporal HMR   | 76.7 |     89.8     | 56.8 |
 | VIBE           | 56.5 |     63.4     | 41.5 |
-| MEVA           | **52.6** |     **62.6**     | 48.1 | -->
+| MEVA           | **52.6** |     **62.6**     | 48.1 |
 
 ## Citation
 If you find our work useful in your research, please cite our paper [MEVA](https://arxiv.org/abs/2008.03789):

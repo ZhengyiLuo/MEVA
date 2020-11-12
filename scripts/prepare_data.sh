@@ -6,3 +6,7 @@ rm meva_data.zip
 cd ..
 mkdir -p $HOME/.torch/models/
 mv data/meva_data/yolov3.weights $HOME/.torch/models/
+mkdir -p results/meva/vae_rec_2/models
+mkdir -p results/meva/train_meva_2/
+cp data/meva_data/model_1000.p results/meva/vae_rec_2/models/
+mv data/meva_data/model_best_3dpw_52_6.pth.tar results/meva/train_meva_2/model_best.pth.tar
