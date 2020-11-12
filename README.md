@@ -75,7 +75,7 @@ Procrustes Aligned Mean Per Joint Position Error (PA-MPJPE) in mm.
 | SPIN           | 59.2 |     67.5     | **41.1** |
 | Temporal HMR   | 76.7 |     89.8     | 56.8 |
 | VIBE           | 56.5 |     63.4     | 41.5 |
-| MEVA           | **52.6** |     **62.6**     | 48.1 |
+| MEVA           | **51.9** |     **62.6**     | 48.1 |
 
 Eval code coming soon!
 

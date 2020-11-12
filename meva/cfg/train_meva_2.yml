@@ -31,7 +31,7 @@ TRAIN:
   #  - 'PoseTrack'
    - 'PennAction'
   DATASETS_3D:
-    - 'ThreeDPW'
+    # - 'ThreeDPW'
     - 'MPII3D'
     - 'H36M'
     # - 'MoVi'

@@ -267,11 +267,11 @@ class MEVA(nn.Module):
             use_residual=False,
         )
         
-        if self.vae_cfg.model_specs['model_name'] == "VAErec":
-            fc1 = nn.Linear(vae_hidden_size, 256)
-            act = nn.Tanh()
-            fc2 = nn.Linear(256, 144)
-            self.vae_init_mlp = nn.Sequential(fc1, act, fc2)
+        # if self.vae_cfg.model_specs['model_name'] == "VAErec":
+        fc1 = nn.Linear(vae_hidden_size, 256)
+        act = nn.Tanh()
+        fc2 = nn.Linear(256, 144)
+        self.vae_init_mlp = nn.Sequential(fc1, act, fc2)
 
         self.regressor = Regressor()
         mean_params = np.load(SMPL_MEAN_PARAMS)

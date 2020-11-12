@@ -64,7 +64,7 @@ if __name__ == "__main__":
     ).to(device)
 
     meva_dir = 'results/meva/train_meva_2/model_best.pth.tar'
-    # meva_dir = 'results/meva/12-11-2020_00-00-35_meva/model_best.pth.tar'
+    # meva_dir = 'results/meva/12-11-2020_01-47-09_meva/model_best.pth.tar'
     checkpoint = torch.load(meva_dir)
     best_performance = checkpoint['performance']
     meva_model.load_state_dict(checkpoint['gen_state_dict'])
@@ -80,9 +80,9 @@ if __name__ == "__main__":
     ################## Data ##################
     t_total = 90
     overlap = 10
-    dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/3dpw_test_db.pt")
+    # dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/3dpw_test_db.pt")
     # dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/h36m_test_db.pt")
-    # dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/mpii3d_test_db.pt")
+    dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/mpii3d_test_db.pt")
     out_dir = "/hdd/zen/data/video_pose/3dpw/meva_res/res"
     full_res = defaultdict(list)
     
