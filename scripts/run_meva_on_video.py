@@ -120,6 +120,9 @@ def main(args):
 
         bboxes = tracking_results[person_id]['bbox']
         frames = tracking_results[person_id]['frames']
+        if len(frames) < 90:
+            print("!!!tracklet < 90 frames")
+            continue
 
         dataset = Inference(
             image_folder=image_folder,
