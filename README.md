@@ -16,6 +16,7 @@
 
 
 **3D Human Motion Estimation via Motion Compression and Refinement**
+
 Zhengyi Luo, S. Alireza Golestaneh, Kris M. Kitani
 
 **ACCV 2020, Oral**  
