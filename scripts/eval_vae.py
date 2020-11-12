@@ -20,6 +20,7 @@ from meva.lib.model import *
 from meva.utils.transform_utils import *
 from meva.utils.image_utils import *
 from meva.lib.smpl import SMPL, SMPL_MODEL_DIR, H36M_TO_J14, SMPL_MEAN_PARAMS
+from meva.utils.video_config import MEVA_DATA_DIR 
 from meva.utils.eval_utils import (
     compute_accel,
     compute_error_accel,
@@ -30,7 +31,7 @@ from meva.utils.eval_utils import (
 )
 from copycat.smpllib.smpl_mujoco import SMPL_M_Renderer
 
-VIBE_DATA_DIR = "/hdd/zen/dev/ActMix/actmix/DataGen/MotionCapture/VIBE/data/vibe_data"
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -60,7 +61,7 @@ if __name__ == "__main__":
             create_transl=False,
             dtype = dtype
         ).to(device)
-    J_regressor = torch.from_numpy(np.load(osp.join(VIBE_DATA_DIR, 'J_regressor_h36m.npy'))).float()
+    J_regressor = torch.from_numpy(np.load(osp.join(MEVA_DATA_DIR, 'J_regressor_h36m.npy'))).float()
 
     output_base = "/hdd/zen/data/ActmixGenenerator/output/3dpw"
     output_path = osp.join(output_base, cfg_name)

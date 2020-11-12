@@ -15,7 +15,7 @@ from collections import defaultdict
 from meva.lib.meva_model import MEVA
 from meva.lib.smpl import SMPL, SMPL_MODEL_DIR, H36M_TO_J14
 from torch.utils.data import DataLoader
-from meva.utils.video_config import parse_args, VIBE_DATA_DIR, VIBE_DB_DIR
+from meva.utils.video_config import parse_args, MEVA_DATA_DIR, VIBE_DB_DIR
 
 from meva.utils.kp_utils import convert_kps
 from meva.utils.image_utils import normalize_2d_kp, split_into_chunks, transfrom_keypoints, assemble_videos
@@ -26,6 +26,11 @@ from meva.utils.tools import get_chunk_with_overlap
 from meva.utils.eval_utils import *
 from meva.utils.video_config import parse_args
 # from smplx import SMPL
+
+
+PCK_THRESH = 150.0
+AUC_MIN = 0.0
+AUC_MAX = 200.0
 
 def db_2_dataset(dataset_data):
 
@@ -58,7 +63,8 @@ if __name__ == "__main__":
         cfg = cfg.VAE_CFG,
     ).to(device)
 
-    meva_dir = 'results/meva/11-11-2020_15-34-20_meva/model_best.pth.tar'
+    meva_dir = 'results/meva/12-11-2020_00-39-23_meva/model_best.pth.tar'
+    # meva_dir = 'results/meva/30-06-2020_13-35-09_meva/model_best.pth.tar'
     checkpoint = torch.load(meva_dir)
     best_performance = checkpoint['performance']
     meva_model.load_state_dict(checkpoint['gen_state_dict'])
@@ -68,16 +74,15 @@ if __name__ == "__main__":
 
     dtype = torch.float
     image_size = 400
-    J_regressor = torch.from_numpy(np.load(osp.join(VIBE_DATA_DIR, 'J_regressor_h36m.npy'))).float()
+    J_regressor = torch.from_numpy(np.load(osp.join(MEVA_DATA_DIR, 'J_regressor_h36m.npy'))).float()
     joints_map = np.array([0, 1, 2, 4, 5, 16, 17, 18, 19])
 
     ################## Data ##################
     t_total = 90
-    overlap = 20
-    # dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/3dpw_all_db_gt.pt")
-    dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/3dpw_test_db.pt")
-    # dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/h36m_test_db.pt")
-    # dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/3dpw_all_db_bbox.pt")
+    overlap = 10
+    # dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/3dpw_test_db.pt")
+    dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/h36m_test_db.pt")
+    # dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/mpii3d_test_db.pt")
     out_dir = "/hdd/zen/data/video_pose/3dpw/meva_res/res"
     full_res = defaultdict(list)
     
@@ -106,8 +111,17 @@ if __name__ == "__main__":
             res_save = {}
             curr_feat = torch.tensor(curr_feats).to(device)
             num_frames = curr_feat.shape[0]
-
-            chunk_idxes, chunck_selects = get_chunk_with_overlap(num_frames, window_size = t_total, overlap=overlap)
+            if num_frames < t_total:
+                if num_frames < t_total:
+                    print(f"Video < {t_total} frames")
+                    continue
+                # print(f"video too short, padding..... {num_frames}")
+                # curr_feat = torch.from_numpy(np.repeat(curr_feats, t_total//num_frames + 1, axis = 0)[:t_total].copy()).to(device)
+                # chunk_idxes = np.array(list(range(0, t_total)))[None, ]
+                # chunck_selects = [(0, num_frames)]
+                
+            else:
+                chunk_idxes, chunck_selects = get_chunk_with_overlap(num_frames, window_size = t_total, overlap=overlap)
 
             meva_theta, meva_j3d= [], []
             for curr_idx in range(len(chunk_idxes)):
@@ -126,12 +140,24 @@ if __name__ == "__main__":
             if gt_j3d.shape[1] == 49:
                 gt_j3d = convert_kps(gt_j3d, src='spin', dst='common')
 
-            mpjpe, mpjpe_pa, error_vel, error_acc = compute_errors(meva_j3d * 1000, gt_j3d * 1000)
+            mpjpe, mpjpe_pa, error_vel, error_acc, errors_pck, mat_procs = compute_errors(meva_j3d * 1000, gt_j3d * 1000)
+            pck_final = compute_pck(errors_pck, PCK_THRESH) * 100.
+            auc_range = np.arange(AUC_MIN, AUC_MAX)
+            pck_aucs = []
+            for pck_thresh_ in auc_range:
+                err_pck_tem = compute_pck(errors_pck, pck_thresh_)
+                pck_aucs.append(err_pck_tem)
+
+            auc_final = compute_auc(auc_range / auc_range.max(), pck_aucs)
+
 
             full_res['mpjpe'].append(mpjpe)
             full_res['mpjpe_pa'].append(mpjpe_pa)
             full_res['vel_err'].append(error_vel)
             full_res['acc_err'].append(error_acc)
+            full_res['auc'].append([auc_final])
+            full_res['pck'].append([pck_final])
+
 
             pbar.set_description(f"{np.mean(mpjpe):.3f}")
 

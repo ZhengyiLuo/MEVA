@@ -31,7 +31,6 @@ def get_chunk_selects(chunk_idxes, last_chunk, window_size = 80, overlap = 10):
 def get_chunk_with_overlap(num_frames, window_size = 80, overlap = 10):
     assert overlap % 2 == 0
     step = window_size - overlap 
-    
     chunk_idxes = view_as_windows(np.array(range(num_frames)), window_size, step= step)
     chunk_supp = np.linspace(num_frames - window_size, num_frames-1, num = window_size).astype(int)
     chunk_idxes = np.concatenate((chunk_idxes, chunk_supp[None, ]))

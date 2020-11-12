@@ -114,49 +114,66 @@ def compute_similarity_transform(S1, S2):
     a set of 3D points S1 (3 x N) closest to a set of 3D points S2,
     where R is an 3x3 rotation matrix, t 3x1 translation, s scale.
     i.e. solves the orthogonal Procrutes problem.
+    Ensure that the first argument is the prediction
+
+    Source: https://en.wikipedia.org/wiki/Kabsch_algorithm
+
+    :param S1 predicted joint positions array 24 x 3
+    :param S2 ground truth joint positions array 24 x 3
+    :return S1_hat: the predicted joint positions after apply similarity transform
+            R : the rotation matrix computed in procrustes analysis
     '''
-    transposed = False
-    if S1.shape[0] != 3 and S1.shape[0] != 2:
-        S1 = S1.T
-        S2 = S2.T
-        transposed = True
-    assert(S2.shape[1] == S1.shape[1])
+    # If all the values in pred3d are zero then procrustes analysis produces nan values
+    # Instead we assume the mean of the GT joint positions is the transformed joint value
 
-    # 1. Remove mean.
-    mu1 = S1.mean(axis=1, keepdims=True)
-    mu2 = S2.mean(axis=1, keepdims=True)
-    X1 = S1 - mu1
-    X2 = S2 - mu2
+    if not (np.sum(np.abs(S1)) == 0):
+        transposed = False
+        if S1.shape[0] != 3 and S1.shape[0] != 2:
+            S1 = S1.T
+            S2 = S2.T
+            transposed = True
+        assert (S2.shape[1] == S1.shape[1])
 
-    # 2. Compute variance of X1 used for scale.
-    var1 = np.sum(X1**2)
+        # 1. Remove mean.
+        mu1 = S1.mean(axis=1, keepdims=True)
+        mu2 = S2.mean(axis=1, keepdims=True)
+        X1 = S1 - mu1
+        X2 = S2 - mu2
 
-    # 3. The outer product of X1 and X2.
-    K = X1.dot(X2.T)
+        # 2. Compute variance of X1 used for scale.
+        var1 = np.sum(X1 ** 2)
 
-    # 4. Solution that Maximizes trace(R'K) is R=U*V', where U, V are
-    # singular vectors of K.
-    U, s, Vh = np.linalg.svd(K)
-    V = Vh.T
-    # Construct Z that fixes the orientation of R to get det(R)=1.
-    Z = np.eye(U.shape[0])
-    Z[-1, -1] *= np.sign(np.linalg.det(U.dot(V.T)))
-    # Construct R.
-    R = V.dot(Z.dot(U.T))
+        # 3. The outer product of X1 and X2.
+        K = X1.dot(X2.T)
 
-    # 5. Recover scale.
-    scale = np.trace(R.dot(K)) / var1
+        # 4. Solution that Maximizes trace(R'K) is R=U*V', where U, V are
+        # singular vectors of K.
+        U, s, Vh = np.linalg.svd(K)
+        V = Vh.T
+        # Construct Z that fixes the orientation of R to get det(R)=1.
+        Z = np.eye(U.shape[0])
+        Z[-1, -1] *= np.sign(np.linalg.det(U.dot(V.T)))
+        # Construct R.
+        R = V.dot(Z.dot(U.T))
 
-    # 6. Recover translation.
-    t = mu2 - scale*(R.dot(mu1))
+        # 5. Recover scale.
+        scale = np.trace(R.dot(K)) / var1
 
-    # 7. Error:
-    S1_hat = scale*R.dot(S1) + t
+        # 6. Recover translation.
+        t = mu2 - scale * (R.dot(mu1))
 
-    if transposed:
-        S1_hat = S1_hat.T
+        # 7. Error:
+        S1_hat = scale * R.dot(S1) + t
 
-    return S1_hat
+        if transposed:
+            S1_hat = S1_hat.T
+
+        return S1_hat, R
+    else:
+        S1_hat = np.tile(np.mean(S2, axis=0), (SMPL_NR_JOINTS, 1))
+        R = np.identity(3)
+
+        return S1_hat, R
 
 
 def compute_similarity_transform_torch(S1, S2):
@@ -316,7 +333,7 @@ def compute_errors(gt3ds, preds):
       - gt3ds: N x 14 x 3
       - preds: N x 14 x 3
     """
-    errors, errors_pa = [], []
+    errors, errors_pa, errors_pck, proc_rot = [], [], [], []
     # Root align.
     gt3ds = align_by_pelvis_batch(gt3ds)
     preds = align_by_pelvis_batch(preds)
@@ -329,15 +346,17 @@ def compute_errors(gt3ds, preds):
         errors.append(np.mean(joint_error))
 
         # Get PA error.
-        pred3d_sym = compute_similarity_transform(pred3d, gt3d)
+        pred3d_sym, R = compute_similarity_transform(pred3d, gt3d)
         pa_error = np.sqrt(np.sum((gt3d - pred3d_sym)**2, axis=1))
         errors_pa.append(np.mean(pa_error))
+        proc_rot.append(R)
+        errors_pck.append(pa_error)
 
     
     error_vel = compute_error_vel(gt3ds, preds)
     error_acc = compute_error_accel(gt3ds, preds)
 
-    return np.array(errors), np.array(errors_pa), error_vel, error_acc
+    return np.array(errors), np.array(errors_pa), error_vel, error_acc, np.stack(errors_pck, 0), np.stack(proc_rot, 0)
 
 def smpl_to_joints(input_pose, betas, smpl,  J_regressor = None):
     # import pdb       
@@ -393,36 +412,36 @@ def get_global_rot_smpl(pose_rotmat, smpl):
     return results
 
 
-# def compute_metric_on_seqs(seq_pred, beta_pred, seq_gt, beta_gt, smpl, J_regressor):
-#     output_pred = smpl_to_joints(seq_pred, beta_pred, smpl, J_regressor)
-#     output_gt = smpl_to_joints(seq_gt, beta_gt, smpl, J_regressor)
-#     metrics = compute_metric_on_outputs(output_gt=output_gt, output_pred=output_pred)
-#     return metrics
+def compute_metric_on_seqs(seq_pred, beta_pred, seq_gt, beta_gt, smpl, J_regressor):
+    output_pred = smpl_to_joints(seq_pred, beta_pred, smpl, J_regressor)
+    output_gt = smpl_to_joints(seq_gt, beta_gt, smpl, J_regressor)
+    metrics = compute_metric_on_outputs(output_gt=output_gt, output_pred=output_pred)
+    return metrics
 
-# def compute_metric_on_outputs(output_gt, output_pred):
-#     m2mm = 1000
-#     verts_gt = output_gt['verts']
-#     pt3d_gt = output_gt['kp_3d']
+def compute_metric_on_outputs(output_gt, output_pred):
+    m2mm = 1000
+    verts_gt = output_gt['verts']
+    pt3d_gt = output_gt['kp_3d']
 
-#     verts_pred = output_pred['verts']
-#     pt3d_pred = output_pred['kp_3d']
+    verts_pred = output_pred['verts']
+    pt3d_pred = output_pred['kp_3d']
     
-#     pred_pelvis = (pt3d_pred[:,[2],:] + pt3d_pred[:,[3],:]) / 2.0
-#     target_pelvis = (pt3d_gt[:,[2],:] + pt3d_gt[:,[3],:]) / 2.0
-#     pt3d_pred -= pred_pelvis
-#     pt3d_gt -= target_pelvis
+    pred_pelvis = (pt3d_pred[:,[2],:] + pt3d_pred[:,[3],:]) / 2.0
+    target_pelvis = (pt3d_gt[:,[2],:] + pt3d_gt[:,[3],:]) / 2.0
+    pt3d_pred -= pred_pelvis
+    pt3d_gt -= target_pelvis
 
-#     errors = torch.sqrt(((pt3d_gt - pt3d_pred) ** 2).sum(dim=-1)).mean(dim=-1).cpu().numpy()
-#     # S1_hat = batch_compute_similarity_transform_torch(pt3d_pred, pt3d_gt)
-#     # errors_pa = torch.sqrt(((S1_hat - pt3d_gt) ** 2).sum(dim=-1)).mean(dim=-1).cpu().numpy()
+    errors = torch.sqrt(((pt3d_gt - pt3d_pred) ** 2).sum(dim=-1)).mean(dim=-1).cpu().numpy()
+    # S1_hat = batch_compute_similarity_transform_torch(pt3d_pred, pt3d_gt)
+    # errors_pa = torch.sqrt(((S1_hat - pt3d_gt) ** 2).sum(dim=-1)).mean(dim=-1).cpu().numpy()
 
-#     pve = np.mean(compute_error_verts(verts_pred.cpu().numpy(), target_verts=verts_gt.cpu().numpy())) * m2mm
-#     accel = np.mean(compute_accel(pt3d_pred.cpu().numpy())) * m2mm
-#     accel_err = np.mean(compute_error_accel(joints_pred=pt3d_pred.cpu().numpy(), joints_gt=pt3d_gt.cpu().numpy())) * m2mm
-#     mpjpe = np.mean(errors) * m2mm
+    pve = np.mean(compute_error_verts(verts_pred.cpu().numpy(), target_verts=verts_gt.cpu().numpy())) * m2mm
+    accel = np.mean(compute_accel(pt3d_pred.cpu().numpy())) * m2mm
+    accel_err = np.mean(compute_error_accel(joints_pred=pt3d_pred.cpu().numpy(), joints_gt=pt3d_gt.cpu().numpy())) * m2mm
+    mpjpe = np.mean(errors) * m2mm
     
-#     # pa_mpjpe = np.mean(errors_pa) * m2mm
-#     return [mpjpe, pve, accel_err]
+    # pa_mpjpe = np.mean(errors_pa) * m2mm
+    return [mpjpe, pve, accel_err]
 
 
 
@@ -473,7 +492,7 @@ def compute_auc(xpts, ypts):
 def compute_pck(errors, THRESHOLD):
     """
     Computes Percentage-Correct Keypoints
-    :param errors: N x 12 x 1
+    :param errors: N x 14 x 1
     :param THRESHOLD: Threshold value used for PCK
     :return: the final PCK value
     """

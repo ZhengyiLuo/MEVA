@@ -36,23 +36,13 @@ class Dataset2D(Dataset):
         self.folder = folder
         self.dataset_name = dataset_name
         self.seqlen = seqlen
-        # self.stride = int(seqlen * (1-overlap))
+        self.stride = int(seqlen * (1-overlap))
         self.debug = debug
         self.db = self.load_db()
 
         self.vid_names = vid_names = self.db['vid_name']
         self.unique_names = unique_names = np.unique(self.db['vid_name'])
-        self.vid_start = vid_start = {}
-        self.vid_lengths = vid_lengths = {}
-        for u_name in unique_names:
-            finds = np.where(vid_names== u_name)[0]
-            vid_start[u_name] = finds[0]
-            vid_lengths[u_name] = len(finds)
-        
-        self.data_samples = data_samples = []
-        for k, v in vid_lengths.items():
-            if vid_lengths[k] > seqlen:
-                [self.data_samples.append(k) for i in range(vid_lengths[k]//seqlen)]
+        self.data_samples = split_into_chunks(self.db['vid_name'], self.seqlen, self.stride)
 
         print("********************** Loading 2D dataset **********************")
         print(f"{dataset_name}: Number of videos: ", len(self.unique_names))    
@@ -82,13 +72,7 @@ class Dataset2D(Dataset):
         return db
 
     def get_single_item(self, index):
-        curr_key = self.data_samples[index]
-        curr_length = self.vid_lengths[curr_key]
-        vid_start = self.vid_start[curr_key]
-
-        start_index = (torch.randint(curr_length - self.seqlen, (1, )) + vid_start if curr_length - self.seqlen != 0 else vid_start).long()
-        end_index = (start_index + self.seqlen - 1).long()
-        
+        start_index, end_index = self.data_samples[index]
         
         kp_2d = self.db['joints2D'][start_index:end_index+1]
         if self.dataset_name != 'posetrack':

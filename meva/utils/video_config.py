@@ -22,7 +22,7 @@ MOVI_DIR = '/hdd/zen/data/video_pose/movi'
 PENNACTION_DIR = '/hdd/zen/data/video_pose/pennaction'
 POSETRACK_DIR = '/hdd/zen/data/video_pose/posetrack'
 SURREAL_DIR = '/hdd/zen/data/video_pose/surreal/SURREAL'
-VIBE_DATA_DIR = 'data/vibe_data'
+MEVA_DATA_DIR = 'data/meva_data'
 
 # Configuration variables
 cfg = CN()

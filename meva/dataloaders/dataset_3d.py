@@ -42,21 +42,8 @@ class Dataset3D(Dataset):
 
         self.vid_names = vid_names = self.db['vid_name']
         self.unique_names = unique_names = np.unique(self.db['vid_name'])
-        self.vid_start = vid_start = {}
-        self.vid_lengths = vid_lengths = {}
-        for u_name in unique_names:
-            finds = np.where(vid_names== u_name)[0]
-            vid_start[u_name] = finds[0]
-            vid_lengths[u_name] = len(finds)
-        
-        if self.split == "train" or self.split =="all":
-            self.data_samples = data_samples = []
-            for k, v in vid_lengths.items():
-                if vid_lengths[k] > seqlen:
-                    [self.data_samples.append(k) for i in range(vid_lengths[k]//seqlen)]
-        elif self.split == "test" or self.split == "val":
-            self.stride = int(seqlen * (1-overlap))
-            self.data_samples = split_into_chunks(self.db['vid_name'], self.seqlen, self.stride)
+        self.stride = int(seqlen * (1-overlap))
+        self.data_samples = split_into_chunks(self.db['vid_name'], self.seqlen, self.stride)
 
         print("********************** Loading 3D dataset **********************")
         print(f'Loaded {self.dataset_name} dataset from {self.db_file}')
@@ -83,15 +70,7 @@ class Dataset3D(Dataset):
         return db
 
     def get_single_item(self, index):
-        if self.split == "train" or self.split =="all":
-            curr_key = self.data_samples[index]
-            curr_length = self.vid_lengths[curr_key]
-            vid_start = self.vid_start[curr_key]
-
-            start_index = (torch.randint(curr_length - self.seqlen, (1, )) + vid_start if curr_length - self.seqlen != 0 else vid_start).long()
-            end_index = (start_index + self.seqlen - 1).long()
-        elif self.split == "test" or self.split == "val":
-            start_index, end_index = self.data_samples[index]
+        start_index, end_index = self.data_samples[index]
 
 
         is_train = self.split == 'train' or self.split == "all"
@@ -107,8 +86,6 @@ class Dataset3D(Dataset):
                 kp_3d = convert_kps(self.db['joints3D'][start_index:end_index + 1], src='spin', dst='common')
         elif self.dataset_name == 'h36m':
             kp_2d = self.db['joints2D'][start_index:end_index + 1]
-            
-
             if is_train:
                 kp_3d = self.db['joints3D'][start_index:end_index + 1]
             else:

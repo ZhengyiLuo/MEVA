@@ -8,7 +8,7 @@ import os.path as osp
 import torch.nn as nn
 import torchvision.models.resnet as resnet
 
-from meva.utils.video_config import VIBE_DATA_DIR
+from meva.utils.video_config import MEVA_DATA_DIR
 from meva.utils.geometry import rotation_matrix_to_angle_axis, rot6d_to_rotmat
 from meva.lib.smpl import SMPL, SMPL_MODEL_DIR, H36M_TO_J14, SMPL_MEAN_PARAMS
 
@@ -364,7 +364,7 @@ def perspective_projection(points, rotation, translation,
 def get_pretrained_hmr():
     device = 'cuda'
     model = hmr().to(device)
-    chackpoint_path = osp.join(VIBE_DATA_DIR, 'spin_model_checkpoint.pth.tar')
+    chackpoint_path = osp.join(MEVA_DATA_DIR, 'spin_model_checkpoint.pth.tar')
     checkpoint = torch.load(chackpoint_path)
     print(f"====> Loading pre trained: {chackpoint_path}")
     model.load_state_dict(checkpoint['model'], strict=False)

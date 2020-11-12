@@ -10,7 +10,7 @@ from smplx.lbs import vertices2joints
 from scipy.spatial.transform import Rotation as sRot
 
 from meva.utils.transform_utils import vertizalize_smpl_root
-from meva.utils.video_config import VIBE_DATA_DIR
+from meva.utils.video_config import MEVA_DATA_DIR
 
 
 # Map joints to SMPL joints
@@ -54,9 +54,9 @@ JOINT_NAMES = [
 ]
 
 JOINT_IDS = {JOINT_NAMES[i]: i for i in range(len(JOINT_NAMES))}
-JOINT_REGRESSOR_TRAIN_EXTRA = osp.join(VIBE_DATA_DIR, 'J_regressor_extra.npy')
-SMPL_MEAN_PARAMS = osp.join(VIBE_DATA_DIR, 'smpl_mean_params.npz')
-SMPL_MODEL_DIR = VIBE_DATA_DIR
+JOINT_REGRESSOR_TRAIN_EXTRA = osp.join(MEVA_DATA_DIR, 'J_regressor_extra.npy')
+SMPL_MEAN_PARAMS = osp.join(MEVA_DATA_DIR, 'smpl_mean_params.npz')
+SMPL_MODEL_DIR = MEVA_DATA_DIR
 H36M_TO_J17 = [6, 5, 4, 1, 2, 3, 16, 15, 14, 11, 12, 13, 8, 10, 0, 7, 9]
 H36M_TO_J14 = H36M_TO_J17[:14]
 

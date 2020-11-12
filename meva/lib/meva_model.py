@@ -10,7 +10,7 @@ import os.path as osp
 import torch.nn as nn
 import torch.nn.functional as F
 
-from meva.utils.video_config import VIBE_DATA_DIR
+from meva.utils.video_config import MEVA_DATA_DIR
 from meva.lib.spin import Regressor, hmr
 from meva.lib.smpl import SMPL, SMPL_MODEL_DIR, H36M_TO_J14, SMPL_MEAN_PARAMS
 from meva.utils.transform_utils import convert_orth_6d_to_mat, convert_orth_6d_to_aa, convert_mat_to_6d, rotation_matrix_to_angle_axis
@@ -336,7 +336,7 @@ class MEVA_demo(MEVA):
             add_linear=False,
             bidirectional=False,
             use_residual=True,
-            pretrained=osp.join(VIBE_DATA_DIR, 'spin_model_checkpoint.pth.tar'),
+            pretrained=osp.join(MEVA_DATA_DIR, 'spin_model_checkpoint.pth.tar'),
             cfg = "vae_rec_1"
     ):
         super().__init__(seqlen, batch_size, n_layers, hidden_size, add_linear, \

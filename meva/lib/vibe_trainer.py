@@ -10,7 +10,7 @@ import os.path as osp
 from progress.bar import Bar
 from tqdm import tqdm
 
-from meva.utils.video_config import VIBE_DATA_DIR
+from meva.utils.video_config import MEVA_DATA_DIR
 from meva.utils.vibe_utils import move_dict_to_device, AverageMeter
 
 from meva.utils.eval_utils import (
@@ -230,7 +230,7 @@ class Trainer():
             for k,v in self.evaluation_accumulators.items():
                 self.evaluation_accumulators[k] = []
 
-        J_regressor = torch.from_numpy(np.load(osp.join(VIBE_DATA_DIR, 'J_regressor_h36m.npy'))).float()
+        J_regressor = torch.from_numpy(np.load(osp.join(MEVA_DATA_DIR, 'J_regressor_h36m.npy'))).float()
 
         for i, target in enumerate(self.valid_loader):
 
