@@ -28,9 +28,8 @@ Zhengyi Luo, S. Alireza Golestaneh, Kris M. Kitani
 MEVA (Motion Estimation vis Variational Autoencoding) is a video-based 3D human pose estimation method that focus on producing **stable** and **natural-looking** human motion from videos. MEVA achieves state-of-the-art human pose estimation accuracy while reducing acceleration error siginificantly. Pleaser refer to our [paper](https://arxiv.org/abs/2008.03789) for more details.  
 
 
-
 ## Updates
-- November 11, 2020 – 14:16 Inference code uploaded
+- November 11, 2020 – 14:16 Inference code finished.
 
 ## Getting Started
 
@@ -64,7 +63,7 @@ python scripts/run_meva_on_video.py --cfg train_meva_2  --vid_file zen_talking_p
 Training code coming soon!
 
 ### Prepare Datasets
-
+Coming soon!
 
 ## Evaluation
 
@@ -77,6 +76,8 @@ Procrustes Aligned Mean Per Joint Position Error (PA-MPJPE) in mm.
 | Temporal HMR   | 76.7 |     89.8     | 56.8 |
 | VIBE           | 56.5 |     63.4     | 41.5 |
 | MEVA           | **51.9** |     **62.6**     | 48.1 |
+
+(The numbers here reflect the current state of this repo, so it might be different from what's in the paper. I did a couple of small improvment to code so it achieved better performance)
 
 Eval code coming soon!
 
@@ -98,7 +99,7 @@ If you find our work useful in your research, please cite our paper [MEVA](https
 
 
 ## References:
-Notice that this repo builds upon a number of previous great works (especially, [VIBE](https://github.com/mkocabas/VIBE)), and borrow scripts from them for convenience. For each file that is borrowed, we indicate that it is referenced and please adhere to their liscnece for usage. 
+Notice that this repo builds upon a number of previous great works (especially, [VIBE](https://github.com/mkocabas/VIBE)), and borrow scripts from them for convenience. Since MEVA focuses on using a pre-trained VAE on [AMASS](https://amass.is.tue.mpg.de/) to breakdown human pose estimation into its coarase-to-fine elements, so the visual training part is heavily borrowed from [VIBE](https://github.com/mkocabas/VIBE). For each file that is borrowed, we indicate that it is referenced and please adhere to their liscnece for usage. 
 
 - Dataloaders, part of the loss function, data pre-processing are from: [VIBE](https://github.com/mkocabas/VIBE) 
 - SMPL models and layer is from: [SMPL-X model](https://github.com/vchoutas/smplx)

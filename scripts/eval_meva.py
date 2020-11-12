@@ -80,9 +80,9 @@ if __name__ == "__main__":
     ################## Data ##################
     t_total = 90
     overlap = 10
-    # dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/3dpw_test_db.pt")
+    dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/3dpw_test_db.pt")
     # dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/h36m_test_db.pt")
-    dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/mpii3d_test_db.pt")
+    # dataset_data = joblib.load("/hdd/zen/data/video_pose/vibe_db/mpii3d_test_db.pt")
     out_dir = "/hdd/zen/data/video_pose/3dpw/meva_res/res"
     full_res = defaultdict(list)
     
