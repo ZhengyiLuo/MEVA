@@ -4,7 +4,6 @@
 [![report](https://img.shields.io/badge/arxiv-report-red)](https://arxiv.org/abs/2008.03789)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/3d-human-motion-estimation-via-motion/3d-human-pose-estimation-on-3dpw)](https://paperswithcode.com/sota/3d-human-pose-estimation-on-3dpw?p=3d-human-motion-estimation-via-motion)
 
-[This repo is still under construction]
 ---
 
 
@@ -79,7 +78,10 @@ Procrustes Aligned Mean Per Joint Position Error (PA-MPJPE) in mm.
 | VIBE           | 56.5 |     63.4     | 41.5 |
 | MEVA           | **51.9** |     **62.6**     | 48.1 |
 
-(The numbers here reflect the current state of this repo, so it might be different from what's in the paper. I did a couple of small improvment to code so it achieved better performance)
+(The numbers here reflect the current state of this repo, so it might be different from what's in the paper. I did a couple of small improvment to code so it achieved better performance. The changes:
+1. I used an overlapping temporal window when processing the video frames, which largly eliminate the issue introduced at the 3 second transition described in the paper. 
+2. I used a new VAE architecture where the VAE does not take in the initial frame and only reconstructs motion from the latent code. 
+)
 
 Eval code coming soon!
 
