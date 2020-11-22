@@ -121,7 +121,7 @@ def main(args):
         bboxes = tracking_results[person_id]['bbox']
         frames = tracking_results[person_id]['frames']
         if len(frames) < 90:
-            print("!!!tracklet < 90 frames")
+            print(f"!!!tracklet < 90 frames: {len(frames)} frames")
             continue
 
         dataset = Inference(
@@ -197,6 +197,7 @@ def main(args):
 
     del model
 
+
     end = time.time()
     fps = num_frames / (end - vibe_time)
 
@@ -211,7 +212,7 @@ def main(args):
 
     # vibe_results = joblib.load(os.path.join(output_path, "vibe_output.pkl"))
 
-    if not args.no_render:
+    if not args.no_render or not len(vibe_results) == 0:
         # ========= Render results as a single video ========= #
         renderer = Renderer(resolution=(orig_width, orig_height), orig_img=True, wireframe=args.wireframe)
 

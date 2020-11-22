@@ -41,8 +41,10 @@ MEVA (Motion Estimation vis Variational Autoencoding) is a video-based 3D human 
 ### How to install
 Install the dependencies:
 ```
-pip install -r requirements.txt
+cat requirements.txt | xargs -n 1 pip install
 ```
+
+(The requirements need to installed in certian order)
 
 ### Running inference/Demo
 
