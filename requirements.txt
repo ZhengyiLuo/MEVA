@@ -5,7 +5,10 @@ scipy
 chumpy
 numba
 yacs
+joblib
 filterpy
+h5py
+scikit-image
 opencv-python==3.4.11.43
 torch
 torchvision
