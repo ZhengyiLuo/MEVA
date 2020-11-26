@@ -3,9 +3,7 @@ import os
 import shutil
 from os import path
 from PIL import Image
-from gym.envs.mujoco.mujoco_env import MujocoEnv
 from meva.khrylib.utils.math import *
-import glfw
 import cv2
 
 
