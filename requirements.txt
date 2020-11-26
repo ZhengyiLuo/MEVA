@@ -6,6 +6,9 @@ chumpy
 numba
 yacs
 joblib
+trimesh
+pyrender
+pytube
 filterpy
 h5py
 scikit-image
