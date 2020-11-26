@@ -4,6 +4,7 @@ trained_models/
 someOtherfoler/
 results/
 data/
+.vscode/
 
 # Compiled source #
 ###################
