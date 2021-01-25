@@ -152,7 +152,7 @@ def save_video_data(subject_id, export_video=False, export_frame=False, export_v
         if export_vibe:
             print('calling VIBE')
             out_dir = f'{h36m_out_folder}/{args.vibe_folder}/S{subject_id}'
-            if not (args.skip and os.path.exists(f'{out_dir}/{action_name}_cam{cam_id}/vibe_output.pkl')):
+            if not (args.skip and os.path.exists(f'{out_dir}/{action_name}_cam{cam_id}/meva_output.pkl')):
                 os.makedirs(out_dir, exist_ok=True)
                 cmd = ['/mnt/home/yeyuan/anaconda3/envs/vibe-env/bin/python', '/mnt/home/yeyuan/repo/VIBE/demo.py',
                     '--vid_file', out_file, '--output_folder', out_dir, '--no_render', '--bbox_scale', str(args.bbox_scale), '--shift', str(args.shift)]
