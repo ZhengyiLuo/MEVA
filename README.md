@@ -92,12 +92,12 @@ Eval code coming soon!
 ## Citation
 If you find our work useful in your research, please cite our paper [MEVA](https://arxiv.org/abs/2008.03789):
 ```
-@article{Luo20203DHM,
-  title={3D Human Motion Estimation via Motion Compression and Refinement},
-  author={Zhengyi Luo and S. Golestaneh and Kris M. Kitani},
-  journal={ArXiv},
-  year={2020},
-  volume={abs/2008.03789}
+@InProceedings{Luo_2020_ACCV,
+    author    = {Luo, Zhengyi and Golestaneh, S. Alireza and Kitani, Kris M.},
+    title     = {3D Human Motion Estimation via Motion Compression and Refinement},
+    booktitle = {Proceedings of the Asian Conference on Computer Vision (ACCV)},
+    month     = {November},
+    year      = {2020}
 }
 ```
 
