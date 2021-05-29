@@ -9,8 +9,8 @@ mv data/meva_data/yolov3.weights $HOME/.torch/models/
 mkdir -p results/meva/vae_rec_2/models
 mkdir -p results/meva/train_meva_2/
 
-rm results/meva/train_meva_2/model_best.pth.tar
-rm results/meva/vae_rec_2/models/model_1000.p
+rm -f results/meva/train_meva_2/model_best.pth.tar
+rm  -f  results/meva/vae_rec_2/models/model_1000.p
 
 cp data/meva_data/model_1000.p results/meva/vae_rec_2/models/
 mv data/meva_data/model_best.pth.tar results/meva/train_meva_2/model_best.pth.tar
