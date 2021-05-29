@@ -61,7 +61,7 @@ python scripts/run_meva_on_video.py --cfg train_meva_2  --vid_file zen_talking_p
 
 ## Training 
 
-Training code coming soon!
+Training script can be found at scripts/train_meva.py
 
 ### Prepare Datasets
 Coming soon!
@@ -83,7 +83,8 @@ Procrustes Aligned Mean Per Joint Position Error (PA-MPJPE) in mm.
 2. I used a new VAE architecture where the VAE does not take in the initial frame and only reconstructs motion from the latent code. 
 )
 
-Eval code coming soon!
+Eval code can be found at:
+scripts/eval_meva.py
 
 ## Known issues
 1. Visulization scale seems off somehow (the humanoid is not scaled properly), still debugging!
