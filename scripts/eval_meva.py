@@ -64,7 +64,7 @@ if __name__ == "__main__":
     ).to(device)
 
     meva_dir = 'results/meva/train_meva_2/model_best.pth.tar'
-    # meva_dir = 'results/meva/16-11-2020_14-49-27_meva/model_best.pth.tar'
+    # meva_dir = 'results/meva/12-11-2020_01-47-09_meva/model_best.pth.tar'
     checkpoint = torch.load(meva_dir)
     best_performance = checkpoint['performance']
     meva_model.load_state_dict(checkpoint['gen_state_dict'])
@@ -112,22 +112,23 @@ if __name__ == "__main__":
             curr_feat = torch.tensor(curr_feats).to(device)
             num_frames = curr_feat.shape[0]
             if num_frames < t_total:
-                if num_frames < t_total:
-                    print(f"Video < {t_total} frames")
-                    
+                print(f"Video too short: {num_frames} frames")
+                continue
                 # print(f"video too short, padding..... {num_frames}")
                 # curr_feat = torch.from_numpy(np.repeat(curr_feats, t_total//num_frames + 1, axis = 0)[:t_total].copy()).to(device)
                 # chunk_idxes = np.array(list(range(0, t_total)))[None, ]
                 # chunck_selects = [(0, num_frames)]
-                
-            else:
-                chunk_idxes, chunck_selects = get_chunk_with_overlap(num_frames, window_size = t_total, overlap=overlap)
+            # else:
+            chunk_idxes, chunck_selects = get_chunk_with_overlap(num_frames, window_size = t_total, overlap=overlap)
 
             meva_theta, meva_j3d= [], []
             for curr_idx in range(len(chunk_idxes)):
                 chunk_idx = chunk_idxes[curr_idx]
                 cl = chunck_selects[curr_idx]
-                meva_preds = meva_model(curr_feat[None, chunk_idx, :], J_regressor = J_regressor)
+                try:
+                    meva_preds = meva_model(curr_feat[None, chunk_idx, :], J_regressor = J_regressor)
+                except Exception as e:
+                    import pdb; pdb.set_trace()
                 
                 meva_theta.append(meva_preds[-1]['theta'][0,cl[0]:cl[1],3:75].cpu().numpy())
                 meva_j3d.append(meva_preds[-1]['kp_3d'][0, cl[0]:cl[1]].cpu().numpy())

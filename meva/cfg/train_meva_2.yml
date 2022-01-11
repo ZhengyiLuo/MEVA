@@ -33,7 +33,7 @@ TRAIN:
   DATASETS_3D:
     - 'ThreeDPW'
     - 'MPII3D'
-    - 'H36M'
+    # - 'H36M'
     # - 'MoVi'
     # - 'Surreal'
     # - 'AmassRend'

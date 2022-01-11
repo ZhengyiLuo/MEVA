@@ -13,6 +13,7 @@ from torch import optim
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 import joblib
+import copy
 
 from khrylib.utils import *
 from meva.utils.config import Config
@@ -29,6 +30,7 @@ from meva.utils.eval_utils import (
     smpl_to_joints, 
     compute_metric_on_seqs
 )
+from meva.utils.tools import get_chunk_with_overlap
 # from copycat.smpllib.smpl_mujoco import SMPL_M_Renderer
 
 
@@ -67,79 +69,61 @@ if __name__ == "__main__":
     output_path = osp.join(output_base, cfg_name)
     if not osp.isdir(output_path): os.makedirs(output_path)
 
-    dataset_3dpw = joblib.load("/hdd/zen/data/ActBound/AMASS/3dpw_train_res.pkl")
+    # dataset_3dpw = joblib.load("/hdd/zen/data/ActBound/AMASS/3dpw_train_res.pkl")
     # dataset_3dpw = joblib.load("/hdd/zen/data/ActBound/AMASS/3dpw_val_res.pkl")
     # dataset_3dpw = joblib.load("/hdd/zen/data/ActBound/AMASS/3dpw_test_res.pkl")
+    h36m_data = joblib.load("/hdd/zen/data/video_pose/h36m/data_fit/h36m_train_60_fitted.p")
 
-    image_size = 400
+    overlap = 10
     total = cfg.data_specs['t_total']
-
+    t_total = total
     if args.render:
         # renderer = SMPL_Renderer(device = device, image_size = 400, camera_mode="look_at")
         renderer = SMPL_M_Renderer(render_size = (image_size, image_size))
     eval_recs =[]
     # eval_vibe =[]
+    filtered_res = {}
     idx = 0
-    for k, v in tqdm(dataset_3dpw.items()):
-        
+    for k, v in tqdm(h36m_data.items()):
         curr_name = v
-        mocap_thetas = v['target_traj']
-        vibe_thetas = v['traj']
-        vis_feats = v['feat']
-        mocap_betas = v['target_beta']
-        vibe_betas = v['traj_beta']
+        mocap_thetas = v['pose']
         
         with torch.no_grad():
-            vibe_pose = torch.tensor(vibe_thetas).squeeze().to(device)
             mocap_pose = torch.tensor(mocap_thetas).squeeze().to(device)
-            vis_feats = torch.tensor(vis_feats).squeeze().to(device)
-            vibe_betas = torch.tensor(vibe_betas).squeeze().to(device)
-            mocap_betas = torch.tensor(mocap_betas).squeeze().to(device)
 
             mocap_pose_6d = convert_aa_to_orth6d(mocap_pose).reshape(-1, 144)
             mocap_pose_6d = mocap_pose_6d[None, :].permute(1, 0, 2)
-            vibe_pose_6d = convert_aa_to_orth6d(vibe_pose).reshape(-1, 144)
-            vibe_pose_6d = vibe_pose_6d[None, :].permute(1, 0, 2)
-            vis_feats = vis_feats[None, :].permute(1, 0, 2)
+            num_frames = mocap_pose.shape[0]
 
-            mocap_pose_6d_chunks = torch.split(mocap_pose_6d, total, dim=0)
-            vibe_pose_6d_chunks = torch.split(vibe_pose_6d, total, dim=0)
-            vis_feats_chunks = torch.split(vis_feats, total, dim=0)
-
+            chunk_idxes, chunck_selects = get_chunk_with_overlap(num_frames, window_size = t_total, overlap=overlap)
             X_r_acc = []
+            for curr_idx in range(len(chunk_idxes)):
+                chunk_idx = chunk_idxes[curr_idx]
+                cl = chunck_selects[curr_idx]
+                try:
+                    X_r, mu, logvar = model(mocap_pose_6d[chunk_idx, :, :])
+                    
+                except Exception as e:
+                    import pdb; pdb.set_trace()
+                X_r_acc.append(X_r[cl[0]:cl[1], :])
 
-            for i in range(len(mocap_pose_6d_chunks)):
-                mocap_pose_chunk = mocap_pose_6d_chunks[i]
-                vibe_pose_chunk = vibe_pose_6d_chunks[i]
-                vis_feats_chunk = vis_feats_chunks[i]
-
-
-                label_rl = torch.tensor([[1,0]]).to(device).float()
-
-                X_r, mu, logvar = model(mocap_pose_chunk)
-                X_r_acc.append(X_r[:mocap_pose_chunk.shape[0]])
 
             X_r = torch.cat(X_r_acc)
             X_r = X_r.permute(1,0,2)
             ref_pose_curr_rl = convert_orth_6d_to_aa(X_r.squeeze())
 
-            ######## Rendering...... ########
-            if args.render:
-                mocap_pose = vertizalize_smpl_root(mocap_pose).cpu().numpy()
-                ref_pose_curr_rl = vertizalize_smpl_root(ref_pose_curr_rl).cpu().numpy()
-
-                tgt_images = renderer.render_smpl(mocap_pose)
-                ref_images = renderer.render_smpl(ref_pose_curr_rl)
-
-                grid_size = [1,2]
-                videos = [tgt_images, ref_images]
-                descriptions = ["Mocap", "VAE"]
-                output_name = "{}/output_vae{:02d}.mp4".format(output_path, idx)
-                assemble_videos(videos, grid_size, descriptions, output_name)
-                print(output_name)
-                idx += 1
-            else:
-                eval_acc = compute_metric_on_seqs(ref_pose_curr_rl, mocap_betas, mocap_pose, mocap_betas, smpl, J_regressor=J_regressor)
-                eval_recs.append(eval_acc)
+            zeros = torch.zeros((mocap_pose.shape[0], 10)).to(device)
+            # eval_acc = compute_metric_on_seqs(ref_pose_curr_rl, zeros, mocap_pose, zeros, smpl, J_regressor=J_regressor)
+            # eval_recs.append(eval_acc)
             
-    print(np.mean(eval_recs, axis = 0))    
+            filtered_res[k] = copy.deepcopy(v)
+            filtered_res[k]['pose'] = ref_pose_curr_rl.detach().cpu().numpy().copy()
+
+            del ref_pose_curr_rl
+            torch.cuda.empty_cache()
+            import gc
+            gc.collect()
+
+    joblib.dump(filtered_res, "/hdd/zen/data/video_pose/h36m/data_fit/h36m_train_60_filtered.p")
+            
+    # print(np.mean(eval_recs, axis = 0))    
